@@ -9,7 +9,7 @@ using PreviewSystem.Visual;
 using PreviewSystem.Factories;
 
 /// <summary>
-/// Контроллер окна предпросмотра декалей
+///    
 /// </summary>
 public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualParametersProvider
 {
@@ -113,14 +113,14 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
     {
         if (_previewWindow == null) return;
 
-        // Добавляем Mask если нужно
+        //  Mask  
         if (_previewWindow.GetComponent<Mask>() == null)
         {
             var mask = _previewWindow.gameObject.AddComponent<Mask>();
             mask.showMaskGraphic = false;
         }
 
-        // Добавляем Image для маски если нужно
+        //  Image    
         if (_previewWindow.GetComponent<Image>() == null)
         {
             var maskImage = _previewWindow.gameObject.AddComponent<Image>();
@@ -178,6 +178,7 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
         if (layer == null) return;
 
         layer.OnLayerClicked += OnLayerClicked;
+        layer.SetOnMoved(() => _editor?.OnTransformChanged());
         _decalLayers[decal] = layer;
 
         ApplyLayerOrder();
@@ -228,7 +229,7 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
     {
         _selectionStrategy.ApplySelection(_decalLayers.Values, selected);
 
-        // Показываем handles только если есть выбранная декаль
+        //  handles     
         SetCanvasGroupActive(_handlesCanvasGroup, selected != null);
     }
 
@@ -268,6 +269,15 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
 
     public RectTransform GetRectTransform() => _previewWindow;
     public RectTransform GetCanvasRect() => _canvasRect;
+
+    public Canvas GetCanvas() => _canvasRect != null ? _canvasRect.GetComponentInParent<Canvas>() : null;
+
+    public RectTransform GetLayerRect(DecalController decal)
+    {
+        if (decal == null || !_decalLayers.TryGetValue(decal, out var layer))
+            return _previewWindow;
+        return layer.RectTransform;
+    }
     public ILayerVisualParameters GetParameters() => _visualParameters;
 
     #endregion

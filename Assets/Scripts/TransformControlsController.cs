@@ -18,11 +18,18 @@ public class TransformControlsController : MonoBehaviour
     private IDecalEditor _editor;
     private DecalManager _decalManager;
     private bool _lockAspect = true;
+    private Transform _handlesOriginalParent;
+    private const float HandleSize = 24f;
+
+    public bool LockAspect => _lockAspect;
 
     public void Initialize(IDecalEditor editor, DecalManager decalManager)
     {
         _editor = editor;
         _decalManager = decalManager;
+
+        if (_handlesCanvasGroup != null)
+            _handlesOriginalParent = _handlesCanvasGroup.transform.parent;
 
         SetupSliders();
         SetupHandles();
@@ -55,7 +62,8 @@ public class TransformControlsController : MonoBehaviour
 
     private void OnWidthChanged(float value)
     {
-        var rect = _editor.GetPreviewRect();
+        var rect = _editor?.GetPreviewRect();
+        if (rect == null) return;
         if (_lockAspect)
         {
             float aspect = rect.sizeDelta.x / rect.sizeDelta.y;
@@ -71,7 +79,8 @@ public class TransformControlsController : MonoBehaviour
 
     private void OnHeightChanged(float value)
     {
-        var rect = _editor.GetPreviewRect();
+        var rect = _editor?.GetPreviewRect();
+        if (rect == null) return;
         if (_lockAspect)
         {
             float aspect = rect.sizeDelta.x / rect.sizeDelta.y;
@@ -87,7 +96,9 @@ public class TransformControlsController : MonoBehaviour
 
     private void OnRotationChanged(float value)
     {
-        _editor.GetPreviewRect().eulerAngles = new Vector3(0, 0, value);
+        var rect = _editor?.GetPreviewRect();
+        if (rect == null) return;
+        rect.eulerAngles = new Vector3(0, 0, value);
         _editor.OnTransformChanged();
     }
 
@@ -97,6 +108,17 @@ public class TransformControlsController : MonoBehaviour
         {
             _handlesCanvasGroup.alpha = show ? 1f : 0f;
             _handlesCanvasGroup.blocksRaycasts = show;
+
+            if (show)
+            {
+                var layerRect = _editor?.GetPreviewRect() as RectTransform;
+                if (layerRect != null)
+                    PositionHandlesOnLayer(layerRect);
+            }
+            else if (_handlesOriginalParent != null)
+            {
+                _handlesCanvasGroup.transform.SetParent(_handlesOriginalParent);
+            }
         }
 
         if (_topLeftHandle != null) _topLeftHandle.gameObject.SetActive(show);
@@ -104,11 +126,82 @@ public class TransformControlsController : MonoBehaviour
         if (_bottomLeftHandle != null) _bottomLeftHandle.gameObject.SetActive(show);
         if (_bottomRightHandle != null) _bottomRightHandle.gameObject.SetActive(show);
         if (_rotateHandle != null) _rotateHandle.gameObject.SetActive(show);
+        if (_centerDragZone != null) _centerDragZone.gameObject.SetActive(show);
 
         if (_widthSlider != null) _widthSlider.gameObject.SetActive(show);
         if (_heightSlider != null) _heightSlider.gameObject.SetActive(show);
         if (_rotationSlider != null) _rotationSlider.gameObject.SetActive(show);
-        if (_lockAspectToggle != null) _lockAspectToggle.gameObject.SetActive(show);
+        if (_lockAspectToggle != null)
+        {
+            _lockAspectToggle.gameObject.SetActive(show);
+            _lockAspectToggle.SetIsOnWithoutNotify(_lockAspect);
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (_handlesCanvasGroup != null && _handlesCanvasGroup.alpha > 0 && _editor != null)
+        {
+            var layerRect = _editor.GetPreviewRect() as RectTransform;
+            if (layerRect != null && _handlesCanvasGroup.transform.parent == layerRect)
+                PositionHandlesOnLayer(layerRect);
+        }
+    }
+
+    [SerializeField] private DecalCenterDragZone _centerDragZone;
+
+    private void PositionHandlesOnLayer(RectTransform layerRect)
+    {
+        if (layerRect == null) return;
+
+        var handlesRect = _handlesCanvasGroup.GetComponent<RectTransform>();
+        if (handlesRect == null) return;
+
+        _handlesCanvasGroup.transform.SetParent(layerRect, false);
+        _handlesCanvasGroup.transform.localRotation = Quaternion.identity;
+        _handlesCanvasGroup.transform.localScale = Vector3.one;
+
+        handlesRect.anchorMin = Vector2.zero;
+        handlesRect.anchorMax = Vector2.one;
+        handlesRect.offsetMin = Vector2.zero;
+        handlesRect.offsetMax = Vector2.zero;
+
+        float hw = HandleSize * 0.5f;
+        PositionHandle(_topLeftHandle, 0, 1, hw, -hw);
+        PositionHandle(_topRightHandle, 1, 1, -hw, -hw);
+        PositionHandle(_bottomLeftHandle, 0, 0, hw, hw);
+        PositionHandle(_bottomRightHandle, 1, 0, -hw, hw);
+
+        if (_rotateHandle != null)
+        {
+            var rt = _rotateHandle.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.anchorMin = new Vector2(0.5f, 1f);
+                rt.anchorMax = new Vector2(0.5f, 1f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.anchoredPosition = new Vector2(0f, HandleSize * 1.2f);
+                rt.sizeDelta = new Vector2(HandleSize, HandleSize);
+            }
+        }
+
+        if (_centerDragZone != null)
+        {
+            _centerDragZone.transform.SetAsLastSibling();
+            _centerDragZone.Initialize(layerRect, layerRect.parent as RectTransform, () => _editor?.OnTransformChanged());
+        }
+    }
+
+    private void PositionHandle(DecalCornerHandle handle, float anchorX, float anchorY, float offX, float offY)
+    {
+        if (handle == null) return;
+        var rt = handle.GetComponent<RectTransform>();
+        if (rt == null) return;
+        rt.anchorMin = new Vector2(anchorX, anchorY);
+        rt.anchorMax = new Vector2(anchorX, anchorY);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = new Vector2(offX, offY);
+        rt.sizeDelta = new Vector2(HandleSize, HandleSize);
     }
 
     public void UpdateFromPreview(RectTransform previewRect)

@@ -2,17 +2,21 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using PreviewSystem.Interfaces;
+using Fotocentr.Core;
 
 /// <summary>
-/// UI ñëîé äåêàëè ñ ïîääåğæêîé êëèêîâ è âèçóàëüíûõ ıôôåêòîâ
+/// UI ˜˜˜˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜
 /// </summary>
-public class UIDecalLayer : MonoBehaviour, IDecalLayer, IPointerClickHandler
+public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerClickHandler, IBeginDragHandler, IDragHandler
 {
     [SerializeField] private RectTransform _layerRect;
     [SerializeField] private RawImage _layerImage;
+    [SerializeField, Range(2f, 50f)] private float _dragSensitivity = 10f;
 
     public DecalController SourceDecal { get; private set; }
+    public RectTransform RectTransform => _layerRect;
     public event System.Action<DecalController> OnLayerClicked;
+    private System.Action _onMoved;
 
     private RectTransform _parentRect;
     private float _aspectRatio;
@@ -61,6 +65,8 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IPointerClickHandler
         FitToWindow();
     }
 
+    public void SetOnMoved(System.Action callback) => _onMoved = callback;
+
     private void SetupTexture(Texture2D texture)
     {
         if (texture == null) return;
@@ -85,6 +91,8 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IPointerClickHandler
         _instanceMaterial.SetFloat("_OutlineWidth", _visualParameters.OutlineWidth);
     }
 
+    private const float InitialScale = 1f;
+
     private void FitToWindow()
     {
         if (_parentRect == null || _aspectRatio <= 0) return;
@@ -95,12 +103,16 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IPointerClickHandler
         if (windowWidth <= 0 || windowHeight <= 0) return;
 
         float windowAspect = windowWidth / windowHeight;
+        float targetWidth = _aspectRatio > windowAspect
+            ? windowWidth
+            : windowHeight * _aspectRatio;
+        float targetHeight = _aspectRatio > windowAspect
+            ? windowWidth / _aspectRatio
+            : windowHeight;
 
-        Vector2 newSize = _aspectRatio > windowAspect
-            ? new Vector2(windowWidth, windowWidth / _aspectRatio)
-            : new Vector2(windowHeight * _aspectRatio, windowHeight);
-
+        Vector2 newSize = new Vector2(targetWidth * InitialScale, targetHeight * InitialScale);
         _layerRect.sizeDelta = newSize;
+        _layerRect.anchoredPosition = Vector2.zero;
     }
 
     public void UpdateTransform(Vector2 worldPosition, float rotation)
@@ -129,14 +141,43 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IPointerClickHandler
         float value = selected ? 1f : 0f;
         _instanceMaterial.SetFloat(SelectedProperty, value);
 
-        // Ïğèíóäèòåëüíîå îáíîâëåíèå
+        // ˜˜˜˜˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜
         _layerImage.enabled = false;
         _layerImage.enabled = true;
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (!_wasDragging)
+            OnLayerClicked?.Invoke(SourceDecal);
+    }
+
+    private bool _wasDragging;
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        _wasDragging = false;
+        if (_layerRect == null || _parentRect == null) return;
         OnLayerClicked?.Invoke(SourceDecal);
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (_layerRect == null || _parentRect == null) return;
+        _wasDragging = true;
+
+        // ˜˜˜˜˜˜ delta ˜˜ ˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜ ˜˜˜˜˜
+        var canvas = GetComponentInParent<Canvas>();
+        DecalLayerDragHandler.ExecuteDrag(
+            eventData, _layerRect, _parentRect, canvas, _dragSensitivity, _onMoved);
+    }
+
+    public void HandlePointerDrag(PointerEventData eventData)
+    {
+        if (_layerRect == null || _parentRect == null) return;
+        var canvas = GetComponentInParent<Canvas>();
+        DecalLayerDragHandler.ExecuteDrag(
+            eventData, _layerRect, _parentRect, canvas, _dragSensitivity, _onMoved);
     }
 
     private void OnDestroy()

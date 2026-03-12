@@ -1,8 +1,9 @@
 using UnityEngine;
 using PreviewSystem.Services;
 using PreviewSystem.Interfaces;
+using Fotocentr.Core;
 
-public class DecalEditPanel : MonoBehaviour, IDecalEditor
+public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependencies
 {
     [Header("Controllers")]
     [SerializeField] private PreviewWindowController _previewController;
@@ -10,20 +11,37 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor
     [SerializeField] private ImageLoaderController _imageLoader;
 
     [Header("UI Panels")]
-    [SerializeField] private UIDecalsActionPanel _actionPanel; // Панель действий
+    [SerializeField] private UIDecalsActionPanel _actionPanel;
 
-    private DecalManager _decalManager;
+    [Header("Services (injected by CompositionRoot if empty)")]
+    [SerializeField] private DecalManager _decalManager;
+    [SerializeField] private SceneCaptureService _captureService;
+
     private DecalController _activeDecal;
     private IDecalRemovalService _removalService;
+    private ISceneCapture _sceneCapture;
+
+    public void Inject(DecalManager decalManager, ISceneCapture sceneCapture)
+    {
+        _decalManager = decalManager;
+        _sceneCapture = sceneCapture;
+    }
 
     private void Start()
     {
-        _decalManager = FindObjectOfType<DecalManager>();
+        if (_decalManager == null)
+            _decalManager = FindObjectOfType<DecalManager>();
+
         if (_decalManager == null)
         {
-            Debug.LogError("DecalManager not found!");
+            Debug.LogError("DecalManager not found! Assign in Inspector or add CompositionRoot.");
             return;
         }
+
+        if (_sceneCapture == null && _captureService != null)
+            _sceneCapture = _captureService;
+        if (_sceneCapture == null)
+            _sceneCapture = FindObjectOfType<SceneCaptureService>();
 
         InitializeServices();
         InitializeControllers();
@@ -41,7 +59,7 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor
         _transformControls.Initialize(this, _decalManager);
         _imageLoader.Initialize(this, _decalManager);
 
-        // Инициализируем панель действий с сервисом удаления
+        // ?????????????? ?????? ???????? ? ???????? ????????
         _actionPanel?.Initialize(_removalService);
     }
 
@@ -73,7 +91,7 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor
         }
     }
 
-    // Обработчики для панели действий
+    // ??????????? ??? ?????? ????????
     private void OnDeleteSelectedClicked()
     {
         _removalService?.DeleteSelected();
@@ -86,8 +104,7 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor
 
     private void OnSnapshotClicked()
     {
-        // TODO: Implement screenshot functionality
-        Debug.Log("Snapshot clicked");
+        _sceneCapture?.TakeScreenshot();
     }
 
     private void OnDecalLayerClicked(DecalController decal)
@@ -105,24 +122,24 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor
     {
         SetActiveDecal(decal);
         _previewController.HighlightSelected(decal);
-        _actionPanel?.UpdateDeleteButtonState(); // Обновляем состояние кнопки
+        _actionPanel?.UpdateDeleteButtonState(); // ????????? ????????? ??????
     }
 
     private void OnDecalDeleted(DecalController decal)
     {
-        _previewController.RemoveLayer(decal);
-
         if (_activeDecal == decal)
         {
             SetActiveDecal(null);
         }
 
-        _actionPanel?.UpdateDeleteButtonState(); // Обновляем состояние кнопки
+        _previewController.RemoveLayer(decal);
+        _actionPanel?.UpdateDeleteButtonState(); // ????????? ????????? ??????
     }
 
     private void OnDecalTransformChanged(DecalController decal)
     {
-        _previewController.UpdateLayerPosition(decal);
+        // ?? ?????????????? 2D ?? 3D ? ???????? ?????? ??? ?????????????? ??? 2D.
+        // UpdateLayerPosition ??????? ?? layer.UpdateTransform ? ??????? ?? rotation/position.
     }
 
     public void SetActiveDecal(DecalController decal)
@@ -138,7 +155,7 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor
             _activeDecal.SetSelected(true);
 
         UpdateUIFromSelectedDecal();
-        _actionPanel?.UpdateDeleteButtonState(); // Обновляем состояние кнопки
+        _actionPanel?.UpdateDeleteButtonState(); // ????????? ????????? ??????
     }
 
     private void UpdateUIFromSelectedDecal()
@@ -149,8 +166,9 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor
 
             if (_transformControls != null && _previewController != null)
             {
-                var rect = _previewController.GetRectTransform();
+                var rect = _previewController.GetLayerRect(_activeDecal);
                 _transformControls.UpdateFromPreview(rect);
+                OnTransformChanged();
             }
         }
         else
@@ -168,19 +186,18 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor
     {
         if (_activeDecal == null) return;
 
-        RectTransform previewRect = _previewController.GetRectTransform();
+        RectTransform layerRect = _previewController.GetLayerRect(_activeDecal);
+        Canvas canvas = _previewController.GetCanvas();
 
-        _decalManager?.UpdateEditingDecal(
-            previewRect.anchoredPosition,
-            previewRect.sizeDelta,
-            previewRect.eulerAngles.z,
-            _previewController.GetCanvasRect()
-        );
-
-        _previewController.UpdateLayerPosition(_activeDecal);
+        _decalManager?.UpdateEditingDecal(layerRect, _previewController.GetRectTransform(), canvas, layerRect.eulerAngles.z);
     }
 
-    public RectTransform GetPreviewRect() => _previewController?.GetRectTransform();
+    public RectTransform GetPreviewRect() =>
+        _activeDecal != null && _previewController != null
+            ? _previewController.GetLayerRect(_activeDecal)
+            : _previewController?.GetRectTransform();
+
+    public bool GetLockAspectRatio() => _transformControls != null && _transformControls.LockAspect;
     public DecalController GetActiveDecal() => _activeDecal;
 
     private void UnsubscribeFromEvents()

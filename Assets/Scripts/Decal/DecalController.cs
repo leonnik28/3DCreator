@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Управляет одной 3D?декалью, проецируемой на модель через Projector.
+///   3D-,     Projector.
 /// </summary>
 [RequireComponent(typeof(Projector))]
 public class DecalController : MonoBehaviour
@@ -24,7 +24,7 @@ public class DecalController : MonoBehaviour
     private float _aspectRatio = 1f;
     private bool _isSelected;
 
-    /// <summary>Время создания, используется для сортировки слоёв в UI.</summary>
+    /// <summary> ,      UI.</summary>
     public float CreationTime { get; set; }
 
     private void Awake()
@@ -61,7 +61,7 @@ public class DecalController : MonoBehaviour
     }
 
     /// <summary>
-    /// Первичная инициализация декали текстурой и положением на поверхности.
+    ///        .
     /// </summary>
     public void Initialize(Texture2D texture, Vector3 hitPoint, Vector3 hitNormal, float size, LayerMask targetLayers)
     {
@@ -87,14 +87,14 @@ public class DecalController : MonoBehaviour
         _projector.aspectRatio = _aspectRatio;
         _projector.orthographicSize = size;
 
-        // Проецируем только на заданный слой модели
+        //      
         _projector.ignoreLayers = ~targetLayers;
 
         PlaceOnSurface(hitPoint, hitNormal);
     }
 
     /// <summary>
-    /// Переместить декаль на указанную точку поверхности.
+    ///      .
     /// </summary>
     public void PlaceOnSurface(Vector3 hitPoint, Vector3 hitNormal)
     {
@@ -103,16 +103,25 @@ public class DecalController : MonoBehaviour
     }
 
     /// <summary>
-    /// Установить размер проекции в мировых единицах.
+    ///    (   ).
     /// </summary>
-    public void SetSize(float worldSize)
+    public void SetSize(float worldHalfHeight)
     {
-        _projector.orthographicSize = worldSize;
+        _projector.orthographicSize = worldHalfHeight;
         _projector.aspectRatio = _aspectRatio;
     }
 
     /// <summary>
-    /// Включить/выключить режим выделения (подсветка).
+    ///    (/)   .
+    /// </summary>
+    public void SetAspectRatio(float aspect)
+    {
+        _aspectRatio = Mathf.Max(aspect, 0.01f);
+        _projector.aspectRatio = _aspectRatio;
+    }
+
+    /// <summary>
+    /// /   ().
     /// </summary>
     public void SetSelected(bool selected)
     {

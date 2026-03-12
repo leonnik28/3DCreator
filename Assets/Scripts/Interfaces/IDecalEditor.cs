@@ -6,4 +6,5 @@ public interface IDecalEditor
     DecalController GetActiveDecal();
     void OnTransformChanged();
     RectTransform GetPreviewRect();
+    bool GetLockAspectRatio();
 }

@@ -15,6 +15,9 @@ namespace PreviewSystem.Interfaces
         void UpdateWindowSize();
         void SetSelected(bool selected);
         void SetVisualParameters(ILayerVisualParameters parameters);
+        void SetOnMoved(System.Action callback);
+
+        RectTransform RectTransform { get; }
         GameObject gameObject { get; }
         Transform transform { get; }
     }

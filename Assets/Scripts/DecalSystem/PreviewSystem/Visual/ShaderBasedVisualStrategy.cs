@@ -24,26 +24,17 @@ namespace PreviewSystem.Visual
 
         public void Initialize(IDecalLayer layer)
         {
-            if (layer is UIDecalLayer uiLayer)
-            {
-                uiLayer.SetVisualParameters(_defaultParameters);
-            }
+            layer.SetVisualParameters(_defaultParameters);
         }
 
         public void ApplySelection(IDecalLayer layer, bool selected)
         {
-            if (layer is UIDecalLayer uiLayer)
-            {
-                uiLayer.SetSelected(selected);
-            }
+            layer.SetSelected(selected);
         }
 
         public void UpdateVisual(IDecalLayer layer, ILayerVisualParameters parameters)
         {
-            if (layer is UIDecalLayer uiLayer)
-            {
-                uiLayer.SetVisualParameters(parameters);
-            }
+            layer.SetVisualParameters(parameters);
         }
 
         public void Cleanup(IDecalLayer layer)

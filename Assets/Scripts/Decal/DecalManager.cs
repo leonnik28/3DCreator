@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// Отвечает за создание, выбор, обновление и удаление всех декалей в сцене.
+///   , ,       .
 /// </summary>
 public class DecalManager : MonoBehaviour
 {
     [Header("Settings")]
     [SerializeField] private LayerMask _modelLayer = 1 << 0;
-    [SerializeField] private float _defaultDecalSize = 1f;
+    [SerializeField] private float _defaultDecalSize = 0.5f;
+    [SerializeField] private float _uiToWorldScale = 80f;
 
     [Header("Components")]
     [SerializeField] private DecalFactory _decalFactory;
@@ -32,22 +33,23 @@ public class DecalManager : MonoBehaviour
     private void Awake()
     {
         _mainCamera = Camera.main;
-        _transformService = new DecalTransformService(_mainCamera, _modelLayer);
+        _transformService = new DecalTransformService(_mainCamera, _modelLayer, _uiToWorldScale);
         ValidateTargetModel();
     }
 
     private void ValidateTargetModel()
     {
         if (_targetModel == null)
-        {
-            Debug.LogError("DecalManager: target model is not assigned.");
             return;
-        }
 
         if (_targetModel.GetComponent<Collider>() == null)
-        {
             _targetModel.AddComponent<BoxCollider>();
-        }
+    }
+
+    public void SetTargetModel(GameObject model)
+    {
+        _targetModel = model;
+        ValidateTargetModel();
     }
 
     public void CreateNewDecal(Texture2D texture)
@@ -78,7 +80,7 @@ public class DecalManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Выбрать следующую декаль в порядке CreationTime.
+    ///      CreationTime.
     /// </summary>
     public void SelectNextDecal()
     {
@@ -112,21 +114,14 @@ public class DecalManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Обновить активную декаль на основе координат 2D?редактора.
+    ///      2D- ().
     /// </summary>
-    public void UpdateEditingDecal(Vector2 uiPosition, Vector2 uiSize, float rotation, RectTransform canvasRect)
+    public void UpdateEditingDecal(RectTransform layerRect, RectTransform previewRect, Canvas canvas, float rotation)
     {
         if (_selectedDecal == null)
             return;
 
-        _transformService.UpdateTransform(
-            _selectedDecal,
-            uiPosition,
-            uiSize,
-            rotation,
-            canvasRect
-        );
-
+        _transformService.UpdateTransform(_selectedDecal, layerRect, previewRect, canvas, rotation);
         OnDecalTransformChanged?.Invoke(_selectedDecal);
     }
 
@@ -136,7 +131,7 @@ public class DecalManager : MonoBehaviour
             return;
 
         _decalFactory.DestroyDecal(decal);
-        // дальше сработает HandleDecalDeleted
+        //   HandleDecalDeleted
     }
 
     public void ClearAllDecals()
