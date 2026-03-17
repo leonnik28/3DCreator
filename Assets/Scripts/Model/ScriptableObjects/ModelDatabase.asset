@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: ModelDatabase
   m_EditorClassIdentifier: 
   _models:
-  - DisplayName: Sphere
-    Prefab: {fileID: 7198957156192349926, guid: 4c82eb466ac83f0488cb85dfb44bc409, type: 3}
-    Thumbnail: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  - DisplayName: "\u041A\u0440\u0443\u0436\u043A\u0430"
+    Prefab: {fileID: 7961562453762209280, guid: ec5e36e01c51c4f499565e871f0aa905, type: 3}
+    Thumbnail: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}

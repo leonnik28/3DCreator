@@ -3,7 +3,9 @@ using System;
 
 /// <summary>
 /// Управляет текущей 3D-моделью и её сменой.
+/// В Awake создаёт первую модель из базы, чтобы она появлялась при запуске сцены.
 /// </summary>
+[DefaultExecutionOrder(-50)]
 public class ModelManager : MonoBehaviour
 {
     [Header("References")]

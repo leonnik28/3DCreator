@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 7044904163958286488}
   - component: {fileID: 6754395210834456646}
   - component: {fileID: 6469713267937215461}
-  - component: {fileID: 8533895474342385868}
   m_Layer: 0
   m_Name: DecalPrefab
   m_TagString: Untagged
@@ -55,22 +54,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _heightOffset: 0.1
---- !u!119 &8533895474342385868
-Projector:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7298143645908576624}
-  m_Enabled: 1
-  serializedVersion: 2
-  m_NearClipPlane: 0.1
-  m_FarClipPlane: 100
-  m_FieldOfView: 60
-  m_AspectRatio: 1
-  m_Orthographic: 0
-  m_OrthographicSize: 10
-  m_Material: {fileID: 2100000, guid: 763ca331e8a1ab54bbcd98056e1842fb, type: 2}
-  m_IgnoreLayers:
-    serializedVersion: 2
-    m_Bits: 0
+  _projectionDepth: 2
+  _decalMaterialTemplate: {fileID: 2100000, guid: 6df386e4037bf7448802c45c0c90c27f, type: 2}
+  _outlineMaterialTemplate: {fileID: 0}
+  _outlineColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  _outlineIntensity: 0.5
