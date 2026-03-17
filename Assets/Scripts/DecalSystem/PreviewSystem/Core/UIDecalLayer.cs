@@ -11,7 +11,7 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerCli
 {
     [SerializeField] private RectTransform _layerRect;
     [SerializeField] private RawImage _layerImage;
-    [SerializeField, Range(2f, 50f)] private float _dragSensitivity = 10f;
+    [SerializeField, Range(0.5f, 10f)] private float _dragSensitivity = 10f;
 
     public DecalController SourceDecal { get; private set; }
     public RectTransform RectTransform => _layerRect;
@@ -159,6 +159,9 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerCli
         _wasDragging = false;
         if (_layerRect == null || _parentRect == null) return;
         OnLayerClicked?.Invoke(SourceDecal);
+
+        var canvas = GetComponentInParent<Canvas>();
+        DecalLayerDragHandler.BeginDrag(eventData, _layerRect, _parentRect, canvas);
     }
 
     public void OnDrag(PointerEventData eventData)

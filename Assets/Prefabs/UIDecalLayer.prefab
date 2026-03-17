@@ -88,4 +88,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _layerRect: {fileID: 7562571581423204863}
   _layerImage: {fileID: 4974185768790486148}
-  _dragSensitivity: 9.8
+  _dragSensitivity: 0.7

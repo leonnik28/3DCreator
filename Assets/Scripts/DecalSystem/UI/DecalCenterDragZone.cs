@@ -11,9 +11,13 @@ using Fotocentr.Core;
 public class DecalCenterDragZone : MonoBehaviour, IBeginDragHandler, IDragHandler
 {
     private IDragTarget _dragTarget;
+    private RectTransform _layerRect;
+    private RectTransform _parentRect;
 
     public void Initialize(RectTransform layerRect, RectTransform parentRect, System.Action onMoved)
     {
+        _layerRect = layerRect;
+        _parentRect = parentRect;
         _dragTarget = layerRect.GetComponent<IDragTarget>();
 
         var img = GetComponent<Image>();
@@ -33,7 +37,11 @@ public class DecalCenterDragZone : MonoBehaviour, IBeginDragHandler, IDragHandle
         }
     }
 
-    public void OnBeginDrag(PointerEventData eventData) { }
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        var canvas = GetComponentInParent<Canvas>();
+        DecalLayerDragHandler.BeginDrag(eventData, _layerRect, _parentRect, canvas);
+    }
 
     public void OnDrag(PointerEventData eventData)
     {

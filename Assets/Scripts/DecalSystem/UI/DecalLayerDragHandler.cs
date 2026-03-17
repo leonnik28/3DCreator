@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 /// <summary>
 /// Единый обработчик перетаскивания слоя декали. Используется UIDecalLayer и DecalCenterDragZone.
@@ -8,6 +9,17 @@ using UnityEngine.UI;
 public static class DecalLayerDragHandler
 {
     private const float DefaultSensitivity = 2f;
+    private static readonly Dictionary<int, Vector2> _lastLocalPointByRectId = new Dictionary<int, Vector2>();
+
+    public static void BeginDrag(PointerEventData eventData, RectTransform layerRect, RectTransform parentRect, Canvas canvas)
+    {
+        if (layerRect == null || parentRect == null || eventData == null) return;
+
+        if (TryGetLocalPointInParent(eventData, parentRect, canvas, out var local))
+            _lastLocalPointByRectId[layerRect.GetInstanceID()] = local;
+        else
+            _lastLocalPointByRectId.Remove(layerRect.GetInstanceID());
+    }
 
     public static void ExecuteDrag(
         PointerEventData eventData,
@@ -17,28 +29,47 @@ public static class DecalLayerDragHandler
         float sensitivity,
         System.Action onMoved)
     {
-        if (layerRect == null || parentRect == null) return;
-
-        Camera cam = eventData.pressEventCamera ?? canvas?.worldCamera ?? Camera.main;
-
-        bool currOk = RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            parentRect, eventData.position, cam, out var currLocal);
-        bool prevOk = RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            parentRect, eventData.position - eventData.delta, cam, out var prevLocal);
-
         float sens = sensitivity > 0.01f ? sensitivity : DefaultSensitivity;
 
-        if (currOk && prevOk)
+        if (layerRect == null || parentRect == null || eventData == null) return;
+
+        int id = layerRect.GetInstanceID();
+
+        if (TryGetLocalPointInParent(eventData, parentRect, canvas, out var currLocal))
         {
-            Vector2 deltaLocal = (currLocal - prevLocal) * sens;
-            layerRect.anchoredPosition += deltaLocal;
+            if (_lastLocalPointByRectId.TryGetValue(id, out var prevLocal))
+            {
+                Vector2 deltaLocal = (currLocal - prevLocal) * sens;
+                layerRect.anchoredPosition += deltaLocal;
+            }
+
+            // Важно: всегда обновляем "предыдущую" точку в одной и той же системе координат.
+            _lastLocalPointByRectId[id] = currLocal;
         }
         else
         {
+            // Фолбэк: если по какой-то причине не удалось получить локальную точку,
+            // двигаем по пиксельной delta, приводя к единицам UI через scaleFactor.
             float scale = canvas != null && canvas.scaleFactor > 0.1f ? canvas.scaleFactor : 1f;
-            layerRect.anchoredPosition += eventData.delta / scale * sens;
+            layerRect.anchoredPosition += (eventData.delta / scale) * sens;
         }
 
         onMoved?.Invoke();
+    }
+
+    private static bool TryGetLocalPointInParent(
+        PointerEventData eventData,
+        RectTransform parentRect,
+        Canvas canvas,
+        out Vector2 local)
+    {
+        local = Vector2.zero;
+        if (eventData == null || parentRect == null) return false;
+
+        Camera cam = eventData.pressEventCamera;
+        if (cam == null && canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            cam = canvas.worldCamera ?? Camera.main;
+
+        return RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, eventData.position, cam, out local);
     }
 }

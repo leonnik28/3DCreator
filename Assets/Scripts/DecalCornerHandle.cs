@@ -10,8 +10,10 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler
     public enum CornerType { TopLeft, TopRight, BottomLeft, BottomRight }
 
     [SerializeField] private CornerType _cornerType;
-    [SerializeField] private float _minSize = 50f;
-    [SerializeField] private float _maxSize = 500f;
+    [Tooltip("Минимальный размер слоя в UI-единицах. 0 или меньше — авто (по размеру ручек).")]
+    [SerializeField] private float _minSize = 0f;
+    [Tooltip("Максимальный размер слоя в UI-единицах. 0 или меньше — без лимита.")]
+    [SerializeField] private float _maxSize = 0f;
     [SerializeField, Range(0.5f, 3f)] private float _resizeSensitivity = 1f; // Уменьшил чувствительность
 
     private IDecalEditor _editor;
@@ -175,8 +177,11 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler
 
     private Vector2 ClampAndApplyAspectRatio(Vector2 size)
     {
-        size.x = Mathf.Clamp(size.x, _minSize, _maxSize);
-        size.y = Mathf.Clamp(size.y, _minSize, _maxSize);
+        float min = GetEffectiveMinSize();
+        float max = GetEffectiveMaxSize();
+
+        size.x = ClampOptional(size.x, min, max);
+        size.y = ClampOptional(size.y, min, max);
 
         if (_editor != null && _editor.GetLockAspectRatio())
         {
@@ -184,9 +189,9 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler
             float newSizeX = size.x;
             float newSizeY = newSizeX / aspect;
 
-            if (newSizeY > _maxSize || newSizeY < _minSize)
+            if (!IsWithinOptional(newSizeY, min, max))
             {
-                newSizeY = Mathf.Clamp(newSizeY, _minSize, _maxSize);
+                newSizeY = ClampOptional(newSizeY, min, max);
                 newSizeX = newSizeY * aspect;
             }
 
@@ -194,6 +199,36 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler
         }
 
         return size;
+    }
+
+    private float GetEffectiveMinSize()
+    {
+        // Ручки ~24px (см. TransformControlsController.HandleSize). Чтобы ручки оставались видимыми,
+        // ставим минимальный размер немного больше одной ручки по ширине/высоте.
+        const float autoMin = 32f;
+        return _minSize > 0f ? _minSize : autoMin;
+    }
+
+    private float GetEffectiveMaxSize()
+    {
+        // 0 (или меньше) = без верхнего лимита.
+        return _maxSize > 0f ? _maxSize : float.PositiveInfinity;
+    }
+
+    private static float ClampOptional(float value, float min, float max)
+    {
+        if (!float.IsNaN(min) && !float.IsInfinity(min))
+            value = Mathf.Max(value, min);
+        if (!float.IsNaN(max) && !float.IsInfinity(max))
+            value = Mathf.Min(value, max);
+        return value;
+    }
+
+    private static bool IsWithinOptional(float value, float min, float max)
+    {
+        if (!float.IsNaN(min) && !float.IsInfinity(min) && value < min) return false;
+        if (!float.IsNaN(max) && !float.IsInfinity(max) && value > max) return false;
+        return true;
     }
 
     private static DecalSystem.CornerResize.CornerType ToResizeCornerType(CornerType t)
