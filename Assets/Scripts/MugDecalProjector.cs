@@ -107,6 +107,10 @@ public class MugDecalProjector : MonoBehaviour
         EnsureMaterial();
         if (_propBlock == null) return;
 
+        // Чистим блок, чтобы изменения ModelColorizer по _BaseColor не перетирались
+        // "хвостами" предыдущих значений.
+        _propBlock.Clear();
+
         ApplyCylinderGeometry();
         _propBlock.SetFloat(VScaleId, _vScale);
         _propBlock.SetFloat(NoPrintCenterUId, _noPrintCenterU);
@@ -150,7 +154,8 @@ public class MugDecalProjector : MonoBehaviour
         _propBlock.SetTexture(DecalTexId, tex);
         _propBlock.SetVector(DecalRectId, new Vector4(center.x, center.y, halfSize.x, halfSize.y));
         _propBlock.SetFloat(DecalRotationId, rotationDeg);
-        _propBlock.SetColor(BaseColorId, _baseColor);
+        // BaseColor ( _BaseColor ) управляется ModelColorizer по выбранной части.
+        // Здесь не трогаем, иначе Apply цвета может перетираться.
         ApplyToRenderer();
     }
 
@@ -159,7 +164,7 @@ public class MugDecalProjector : MonoBehaviour
         if (_propBlock == null) return;
 
         _propBlock.SetVector(DecalRectId, new Vector4(0.5f, 0.5f, 0f, 0f));
-        _propBlock.SetColor(BaseColorId, _baseColor);
+        // BaseColor управляется ModelColorizer по выбранной части.
     }
 
     private void ApplyCylinderGeometry()
@@ -278,7 +283,6 @@ public class MugDecalProjector : MonoBehaviour
         {
             EnsureMaterial();
             ApplyCylinderGeometry();
-            _propBlock.SetColor(BaseColorId, _baseColor);
             ApplyToRenderer();
         }
     }

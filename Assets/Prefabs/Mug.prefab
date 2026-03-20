@@ -93,6 +93,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7293287616112569530}
   - component: {fileID: 3319020724775802256}
+  - component: {fileID: 7801383343380783268}
   m_Layer: 0
   m_Name: Mug
   m_TagString: Untagged
@@ -138,6 +139,27 @@ MonoBehaviour:
   _noPrintCenterU: 0
   _noPrintHalfU: 0.1
   _noPrintAtCanvasEdges: 1
+--- !u!114 &7801383343380783268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7961562453762209280}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6131f53135e43cd40881e3698f4291fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _parts:
+  - PartId: 1
+    DisplayName: Handle
+    TargetRenderer: {fileID: 5552755177652503639}
+    MaterialIndex: 0
+  - PartId: 2
+    DisplayName: OUT
+    TargetRenderer: {fileID: 3247493740277539413}
+    MaterialIndex: 0
 --- !u!1 &8462998783035763555
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// Применяет цвета к частям модели. Создаёт instance materials.
+/// Применяет цвета к частям модели через MaterialPropertyBlock (без создания instance материалов).
 /// </summary>
 public class ModelColorizer : MonoBehaviour
 {
@@ -10,7 +10,8 @@ public class ModelColorizer : MonoBehaviour
     [SerializeField] private ModelManager _modelManager;
 
     private ModelPartConfig _currentConfig;
-    private readonly Dictionary<string, Material> _instanceMaterials = new Dictionary<string, Material>();
+    private readonly Dictionary<string, MaterialPropertyBlock> _propertyBlocks = new Dictionary<string, MaterialPropertyBlock>();
+    private readonly Dictionary<int, Color> _partColorCache = new Dictionary<int, Color>();
 
     private void Start()
     {
@@ -28,9 +29,8 @@ public class ModelColorizer : MonoBehaviour
         if (_modelManager != null)
             _modelManager.OnModelChanged -= OnModelChanged;
 
-        foreach (var mat in _instanceMaterials.Values)
-            if (mat != null) Destroy(mat);
-        _instanceMaterials.Clear();
+        _propertyBlocks.Clear();
+        _partColorCache.Clear();
     }
 
     private void OnModelChanged(GameObject model, int index)
@@ -41,9 +41,8 @@ public class ModelColorizer : MonoBehaviour
     private void RefreshConfig()
     {
         _currentConfig = null;
-        foreach (var mat in _instanceMaterials.Values)
-            if (mat != null) Destroy(mat);
-        _instanceMaterials.Clear();
+        _propertyBlocks.Clear();
+        _partColorCache.Clear();
 
         if (_modelManager?.CurrentModel == null) return;
 
@@ -61,33 +60,41 @@ public class ModelColorizer : MonoBehaviour
 
     public void SetPartColor(int partIndex, Color color)
     {
+        // На старте модель может появиться раньше, чем соберётся конфиг частей.
+        // Поэтому на всякий случай дёргаем RefreshConfig при отсутствии конфигурации.
+        if (_currentConfig == null)
+            RefreshConfig();
+
         var entry = _currentConfig?.GetPart(partIndex);
         if (entry == null || entry.TargetRenderer == null) return;
 
         var sharedMats = entry.TargetRenderer.sharedMaterials;
-        var mats = entry.TargetRenderer.materials;
         int start = entry.MaterialIndex >= 0 ? entry.MaterialIndex : 0;
-        int end = entry.MaterialIndex >= 0 ? entry.MaterialIndex + 1 : mats.Length;
+        int end = entry.MaterialIndex >= 0 ? entry.MaterialIndex + 1 : (sharedMats != null ? sharedMats.Length : 0);
 
-        for (int i = start; i < end && i < mats.Length; i++)
+        for (int i = start; i < end && sharedMats != null && i < sharedMats.Length; i++)
         {
             var key = $"{entry.TargetRenderer.GetInstanceID()}_{i}";
-            if (!_instanceMaterials.TryGetValue(key, out var mat))
+            if (!_propertyBlocks.TryGetValue(key, out var block) || block == null)
             {
-                if (sharedMats != null && i < sharedMats.Length && sharedMats[i] != null)
-                {
-                    mat = new Material(sharedMats[i]);
-                    _instanceMaterials[key] = mat;
-                    mats[i] = mat;
-                }
+                block = new MaterialPropertyBlock();
+                _propertyBlocks[key] = block;
             }
+
+            var mat = sharedMats[i];
             if (mat != null)
             {
-                if (mat.HasProperty("_Color")) mat.color = color;
-                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+                if (mat.HasProperty("_Color")) block.SetColor("_Color", color);
+                if (mat.HasProperty("_BaseColor")) block.SetColor("_BaseColor", color);
             }
+
+            // Применяем блок к Renderer целиком.
+            // Для большинства случаев "часть" = отдельный Renderer, поэтому этого достаточно
+            // и надёжнее, чем SetPropertyBlock(..., materialIndex).
+            entry.TargetRenderer.SetPropertyBlock(block);
         }
-        entry.TargetRenderer.materials = mats;
+
+        _partColorCache[partIndex] = color;
     }
 
     public void SetPartColor(string partId, Color color)
@@ -100,4 +107,12 @@ public class ModelColorizer : MonoBehaviour
     }
 
     public ModelPartConfig GetCurrentConfig() => _currentConfig;
+
+    public bool TryGetPartColor(int partIndex, out Color color)
+    {
+        if (_partColorCache.TryGetValue(partIndex, out color))
+            return true;
+        color = default;
+        return false;
+    }
 }
