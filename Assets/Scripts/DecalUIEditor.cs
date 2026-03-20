@@ -46,8 +46,6 @@ public class DecalUIEditor : MonoBehaviour, IDragHandler, IBeginDragHandler, IEn
         BottomLeft,
         BottomRight
     }
-    private ResizeMode currentResizeMode = ResizeMode.None;
-
     void Start()
     {
         SetupSliders();
@@ -257,19 +255,11 @@ public class DecalUIEditor : MonoBehaviour, IDragHandler, IBeginDragHandler, IEn
         dragStartPoint = Input.mousePosition;
         originalSize = previewRect.sizeDelta;
 
-        switch (handleName)
-        {
-            case "TopLeft": currentResizeMode = ResizeMode.TopLeft; break;
-            case "TopRight": currentResizeMode = ResizeMode.TopRight; break;
-            case "BottomLeft": currentResizeMode = ResizeMode.BottomLeft; break;
-            case "BottomRight": currentResizeMode = ResizeMode.BottomRight; break;
-        }
     }
 
     void OnEndResizeHandle()
     {
         isResizing = false;
-        currentResizeMode = ResizeMode.None;
     }
 
     void OnWidthChanged(float value)

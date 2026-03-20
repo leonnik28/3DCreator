@@ -44,10 +44,15 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
 
     public void TakeScreenshot()
     {
-        StartCoroutine(CaptureScreenshotCoroutine());
+        StartCoroutine(CaptureScreenshotCoroutine(saveToDisk: true, onCaptured: null));
     }
 
-    private IEnumerator CaptureScreenshotCoroutine()
+    public void CaptureScreenshotBytes(System.Action<byte[]> onCaptured)
+    {
+        StartCoroutine(CaptureScreenshotCoroutine(saveToDisk: false, onCaptured));
+    }
+
+    private IEnumerator CaptureScreenshotCoroutine(bool saveToDisk, System.Action<byte[]> onCaptured)
     {
         SetUIVisible(false);
         yield return new WaitForEndOfFrame();
@@ -67,7 +72,26 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
 
         SetUIVisible(true);
 
-        SaveScreenshot(tex);
+        try
+        {
+            if (saveToDisk)
+            {
+                SaveScreenshot(tex);
+            }
+            else
+            {
+                // Encode PNG in memory to send it to an AI endpoint.
+                var bytes = tex.EncodeToPNG();
+                onCaptured?.Invoke(bytes);
+                Destroy(tex);
+            }
+        }
+        catch
+        {
+            // Ensure we never leave RenderTexture/Texture objects around.
+            Destroy(tex);
+            throw;
+        }
     }
 
     private void SaveScreenshot(Texture2D tex)
