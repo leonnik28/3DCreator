@@ -134,7 +134,7 @@ MonoBehaviour:
   _previewController: {fileID: 0}
   _decalManager: {fileID: 0}
   _baseColor: {r: 1, g: 1, b: 1, a: 1}
-  _vScale: 0.1
+  _vScale: 0.1285
   _noPrintCenterU: 0
   _noPrintHalfU: 0.1
   _noPrintAtCanvasEdges: 1

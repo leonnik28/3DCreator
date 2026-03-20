@@ -15,4 +15,7 @@ MonoBehaviour:
   _models:
   - DisplayName: "\u041A\u0440\u0443\u0436\u043A\u0430"
     Prefab: {fileID: 7961562453762209280, guid: ec5e36e01c51c4f499565e871f0aa905, type: 3}
-    Thumbnail: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
+    Thumbnail: {fileID: 21300000, guid: 2e38ccf8344072047b23dab8b45efeb6, type: 3}
+  - DisplayName: "\u041A\u0440\u0443\u0436\u043A\u0430 2"
+    Prefab: {fileID: 230931659851563336, guid: 31843133b770b174cb4b7dc0c663da81, type: 3}
+    Thumbnail: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}

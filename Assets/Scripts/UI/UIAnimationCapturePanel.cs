@@ -16,6 +16,8 @@ public class UIAnimationCapturePanel : MonoBehaviour
 
     [Header("Capture (Snapshot в UIDecalsActionPanel)")]
     [SerializeField] private Button _recordButton;
+    [Tooltip("Необязательно: текст на кнопке Record — переключается Record / Stop при записи.")]
+    [SerializeField] private TextMeshProUGUI _recordButtonLabel;
 
     [Header("References")]
     [SerializeField] private ModelRotator _modelRotator;
@@ -40,6 +42,8 @@ public class UIAnimationCapturePanel : MonoBehaviour
 
         if (_speedSlider != null && _speedLabel != null)
             _speedLabel.text = $"{_speedSlider.value:F0}";
+
+        RefreshRecordButtonLabel();
     }
 
     private void OnAnimateToggled(bool value)
@@ -70,12 +74,19 @@ public class UIAnimationCapturePanel : MonoBehaviour
 
     private void OnRecordClicked()
     {
-        if (_captureService != null)
-        {
-            if (_captureService.IsRecording)
-                _captureService.StopVideoRecording();
-            else
-                _captureService.StartVideoRecording();
-        }
+        if (_captureService == null) return;
+
+        if (_captureService.IsRecording)
+            _captureService.StopVideoRecording();
+        else
+            _captureService.StartVideoRecording();
+
+        RefreshRecordButtonLabel();
+    }
+
+    private void RefreshRecordButtonLabel()
+    {
+        if (_recordButtonLabel == null) return;
+        _recordButtonLabel.text = _captureService != null && _captureService.IsRecording ? "Stop" : "Record";
     }
 }

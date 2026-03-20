@@ -164,12 +164,8 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
         {
             _transformControls?.ShowControls(true);
 
-            if (_transformControls != null && _previewController != null)
-            {
-                var rect = _previewController.GetLayerRect(_activeDecal);
-                _transformControls.UpdateFromPreview(rect);
+            if (_previewController != null)
                 OnTransformChanged();
-            }
         }
         else
         {
