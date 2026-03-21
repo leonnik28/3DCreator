@@ -18,7 +18,6 @@
 ### Interface Segregation (ISP)
 - **IDragTarget** — минимальный контракт: `HandlePointerDrag`
 - **ISceneCapture** — только методы съёмки
-- **IDecal** — интерфейс 3D-декали (для будущего использования)
 
 ### Dependency Inversion (DIP)
 - **CompositionRoot** — точка внедрения зависимостей
@@ -33,27 +32,22 @@
 Assets/Scripts/
 ├── Core/                     # Ядро, интерфейсы, DI
 │   ├── Interfaces/
-│   │   ├── IDecal.cs
 │   │   ├── IDragTarget.cs
 │   │   ├── ISceneCapture.cs
 │   │   └── IDecalEditorDependencies.cs
 │   └── CompositionRoot.cs
 │
-├── Decal/                    # 3D-декали
-│   ├── DecalController.cs
-│   ├── DecalManager.cs
-│   ├── DecalEditPanel.cs
-│   ├── DecalFactory.cs
-│   └── Services/DecalTransformService.cs
+├── Decal/                    # Вся подсистема декалей
+│   ├── Runtime/              # 3D decal runtime (manager/controller/projector)
+│   ├── UI/                   # UI-редактор и контролы трансформации
+│   ├── Preview/              # Preview window, layers, visual strategies
+│   ├── Resize/               # Стратегии resize по углам
+│   ├── Factories/            # Фабрики декалей
+│   └── Services/             # Сервисы преобразования 2D->3D
 │
-├── DecalSystem/              # UI и логика декалей
-│   ├── CornerResize/         # Strategy для углов
-│   ├── PreviewSystem/        # Окно превью, слои
-│   └── UI/                   # DecalCenterDragZone, DecalLayerDragHandler
-│
-├── Interfaces/IDecalEditor.cs
 ├── Model/                    # 3D-модели, окрашивание
 ├── UI/                       # Панели, ColorPicker
+│   └── Controllers/          # UI flow controllers
 ├── Viewport/                 # Камера, съёмка
 └── TextureLoad/
 ```
@@ -73,3 +67,6 @@ Assets/Scripts/
 ## Удалено
 
 - `DecalRepository`, `DecalPlacementService`, `DecalSelectionService`, `DecalData` — не использовались
+- legacy-блок стратегий: `PreviewWindowStrategyFactory`, `AspectRatioSizeStrategy`, `WorldToUIPositioningStrategy`, `ImageDragStrategy`, `PreviewWindowValidator`
+- неиспользуемые интерфейсы: `IDecal`, `IImagePositioningStrategy`, `IImageSizeStrategy`, `IDragHandlerStrategy`, `IStateValidator`
+- неиспользуемые компоненты: `DecalUIEditor`, `UIDecalEditorPanel`, `MugCanvasBinder`

@@ -7,7 +7,7 @@ public class ModelRotator : MonoBehaviour
 {
     public enum Axis { Horizontal, Vertical }
 
-    [SerializeField] private Transform _target;
+    private Transform _target;
     [SerializeField] private Axis _axis = Axis.Horizontal;
     [SerializeField] private float _speed = 120f;
     [SerializeField] private bool _reverse;
@@ -39,5 +39,4 @@ public class ModelRotator : MonoBehaviour
     public void SetAxis(Axis axis) => _axis = axis;
     public void SetReverse(bool reverse) => _reverse = reverse;
     public void SetAnimating(bool animating) => _isAnimating = animating;
-    public void ToggleAnimation() => _isAnimating = !_isAnimating;
 }

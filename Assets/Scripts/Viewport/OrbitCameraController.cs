@@ -77,10 +77,4 @@ public class OrbitCameraController : MonoBehaviour
         ApplyOrbit();
     }
 
-    public void SnapToFront()
-    {
-        _angleX = 0;
-        _angleY = 15f;
-        ApplyOrbit();
-    }
 }

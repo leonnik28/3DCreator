@@ -252,6 +252,4 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
         }
     }
 
-    public void SetCaptureCamera(Camera cam) => _captureCamera = cam;
-    public void SetUIRoots(GameObject[] roots) => _uiRootsToHide = roots;
 }
