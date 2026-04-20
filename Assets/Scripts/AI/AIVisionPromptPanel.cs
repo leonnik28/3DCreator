@@ -6,6 +6,7 @@ using Fotocentr.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 namespace Fotocentr.AI
 {
@@ -18,6 +19,10 @@ namespace Fotocentr.AI
         [SerializeField] private TMP_InputField _promptInput;
         [SerializeField] private TMP_InputField _standardPromptInput;
         [SerializeField] private TMP_Text _outputText;
+        [Tooltip("Опционально: viewport для скролла ответа. Если не задан — используется родитель OutputText.")]
+        [SerializeField] private RectTransform _outputViewport;
+        [Tooltip("Опционально: ScrollRect ответа. Если не задан — создаётся/ищется на viewport.")]
+        [SerializeField] private ScrollRect _outputScrollRect;
         [SerializeField] private TMP_Text _statusText;
         [SerializeField] private Button _sendButton;
         [SerializeField] private Button _copyButton;
@@ -153,6 +158,76 @@ namespace Fotocentr.AI
 
             if (_statusText != null && string.IsNullOrWhiteSpace(_statusText.text))
                 _statusText.text = "";
+
+            EnsureOutputScrollSetup();
+        }
+
+        private void EnsureOutputScrollSetup()
+        {
+            if (_outputText == null)
+                return;
+
+            RectTransform textRect = _outputText.rectTransform;
+            RectTransform viewport = _outputViewport;
+            if (viewport == null)
+                viewport = textRect.parent as RectTransform;
+            if (viewport == null)
+                return;
+
+            if (_outputScrollRect == null)
+                _outputScrollRect = viewport.GetComponent<ScrollRect>();
+            if (_outputScrollRect == null)
+                _outputScrollRect = viewport.gameObject.AddComponent<ScrollRect>();
+
+            Image viewportImage = viewport.GetComponent<Image>();
+            if (viewportImage == null)
+            {
+                viewportImage = viewport.gameObject.AddComponent<Image>();
+                viewportImage.color = new Color(1f, 1f, 1f, 0.002f);
+            }
+
+            Mask mask = viewport.GetComponent<Mask>();
+            if (mask == null)
+                mask = viewport.gameObject.AddComponent<Mask>();
+            mask.showMaskGraphic = false;
+
+            ContentSizeFitter fitter = textRect.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+                fitter = textRect.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            textRect.anchorMin = new Vector2(0f, 1f);
+            textRect.anchorMax = new Vector2(1f, 1f);
+            textRect.pivot = new Vector2(0.5f, 1f);
+            textRect.anchoredPosition = Vector2.zero;
+            textRect.sizeDelta = new Vector2(0f, textRect.sizeDelta.y);
+
+            _outputText.enableWordWrapping = true;
+            _outputText.overflowMode = TextOverflowModes.Overflow;
+
+            _outputScrollRect.viewport = viewport;
+            _outputScrollRect.content = textRect;
+            _outputScrollRect.horizontal = false;
+            _outputScrollRect.vertical = true;
+            _outputScrollRect.movementType = ScrollRect.MovementType.Clamped;
+            _outputScrollRect.scrollSensitivity = 24f;
+
+            EventTrigger trigger = viewport.GetComponent<EventTrigger>();
+            if (trigger == null)
+                trigger = viewport.gameObject.AddComponent<EventTrigger>();
+        }
+
+        private void SetOutputText(string value)
+        {
+            if (_outputText == null)
+                return;
+
+            _outputText.text = value ?? string.Empty;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_outputText.rectTransform);
+
+            if (_outputScrollRect != null)
+                _outputScrollRect.verticalNormalizedPosition = 1f;
         }
 
         private void SetBusy(bool busy)
@@ -225,8 +300,7 @@ namespace Fotocentr.AI
             }
 
             SetBusy(true);
-            if (_outputText != null)
-                _outputText.text = "";
+            SetOutputText(string.Empty);
 
             Debug.Log("[AI] Send clicked. includeScreenshot=" + _includeScreenshot + ", endpoint=" + _credentialsProvider.EndpointUrl + ", model=" + _credentialsProvider.Model);
 
@@ -314,8 +388,7 @@ namespace Fotocentr.AI
                 onSuccess: response =>
                 {
                     SetStatus("Done.", false);
-                    if (_outputText != null)
-                        _outputText.text = response;
+                    SetOutputText(response);
                     SetBusy(false);
                     LogDev("Request succeeded and response parsed.", false);
                 },
@@ -347,8 +420,7 @@ namespace Fotocentr.AI
                     }
 
                     SetStatus(error, true);
-                    if (_outputText != null)
-                        _outputText.text = "";
+                    SetOutputText(string.Empty);
                     SetBusy(false);
                 }
             );
@@ -376,8 +448,7 @@ namespace Fotocentr.AI
                 onSuccess: response =>
                 {
                     SetStatus("Done.", false);
-                    if (_outputText != null)
-                        _outputText.text = response;
+                    SetOutputText(response);
                     SetBusy(false);
                     LogDev("Request succeeded and response parsed.", false);
                 },
@@ -407,8 +478,7 @@ namespace Fotocentr.AI
                     }
 
                     SetStatus(error, true);
-                    if (_outputText != null)
-                        _outputText.text = "";
+                    SetOutputText(string.Empty);
                     SetBusy(false);
                 }
             );
@@ -483,16 +553,14 @@ namespace Fotocentr.AI
                 onSuccess: response =>
                 {
                     SetStatus("Done.", false);
-                    if (_outputText != null)
-                        _outputText.text = response;
+                    SetOutputText(response);
                     SetBusy(false);
                     LogDev("Retry succeeded.", false);
                 },
                 onError: retryError =>
                 {
                     SetStatus(retryError, true);
-                    if (_outputText != null)
-                        _outputText.text = "";
+                    SetOutputText(string.Empty);
                     SetBusy(false);
                     LogDev(retryError, true);
                 }
@@ -527,16 +595,14 @@ namespace Fotocentr.AI
                 onSuccess: response =>
                 {
                     SetStatus("Done.", false);
-                    if (_outputText != null)
-                        _outputText.text = response;
+                    SetOutputText(response);
                     SetBusy(false);
                     LogDev("Retry succeeded.", false);
                 },
                 onError: retryError =>
                 {
                     SetStatus(retryError, true);
-                    if (_outputText != null)
-                        _outputText.text = "";
+                    SetOutputText(string.Empty);
                     SetBusy(false);
                     LogDev(retryError, true);
                 }
