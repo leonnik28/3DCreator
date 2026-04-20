@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
@@ -16,9 +17,21 @@ public class UIModelSelector : MonoBehaviour
     [SerializeField] private Button _nextButton;
     [SerializeField] private TextMeshProUGUI _label;
 
+    [Header("Placement")]
+    [Tooltip("Если задано — скролл-зона со списком моделей будет создана внутри этого RectTransform (вместо родителя _content).")]
+    [SerializeField] private RectTransform _scrollPlacementRoot;
+    [Tooltip("Только если Placement не задан: отступы скролл-зоны относительно родителя _content (как раньше). Если задан Placement — скролл на весь Placement (якоря 0..1).")]
+    [SerializeField] private Vector2 _scrollAnchorMin = new Vector2(0.04f, 0.14f);
+    [Tooltip("Только если Placement не задан: отступы скролл-зоны относительно родителя _content.")]
+    [SerializeField] private Vector2 _scrollAnchorMax = new Vector2(0.96f, 0.58f);
+    [Tooltip("Если включено — создаём ScrollRect/Viewport автоматически. Если выключено — ожидается, что они уже собраны в сцене.")]
+    [SerializeField] private bool _autoBuildScrollArea = true;
+    [Tooltip("Выравнивание превью в строке. MiddleLeft — как раньше; MiddleCenter — если мало моделей и полоса не заполняет ширину, не «прилипает» к левому краю.")]
+    [SerializeField] private TextAnchor _itemsAlignment = TextAnchor.MiddleLeft;
+
     private readonly List<GameObject> _items = new List<GameObject>();
 
-    private void Start()
+    private IEnumerator Start()
     {
         if (_modelManager == null)
             _modelManager = FindObjectOfType<ModelManager>();
@@ -26,10 +39,11 @@ public class UIModelSelector : MonoBehaviour
         if (_modelManager == null || _modelManager.Database == null)
         {
             gameObject.SetActive(false);
-            return;
+            yield break;
         }
 
         EnsureHorizontalScrollArea();
+        EnsureContentLayout();
 
         if (_prevButton != null) _prevButton.onClick.AddListener(() => _modelManager.PreviousModel());
         if (_nextButton != null) _nextButton.onClick.AddListener(() => _modelManager.NextModel());
@@ -37,6 +51,16 @@ public class UIModelSelector : MonoBehaviour
         BuildItems();
         _modelManager.OnModelChanged += OnModelChanged;
         UpdateSelectionVisual();
+
+        // После первого кадра лейаут и ScrollRect стабилизируются (иначе content часто остаётся по ширине viewport).
+        yield return null;
+        ApplyContentWidthFromChildren();
+        Canvas.ForceUpdateCanvases();
+        if (_content != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_content);
+        var scroll = _content != null ? _content.GetComponentInParent<ScrollRect>() : null;
+        if (scroll != null)
+            scroll.horizontalNormalizedPosition = 0f;
     }
 
     private void OnDestroy()
@@ -51,23 +75,45 @@ public class UIModelSelector : MonoBehaviour
     private void EnsureHorizontalScrollArea()
     {
         if (_content == null) return;
+        if (!_autoBuildScrollArea)
+            return;
+
         if (_content.GetComponentInParent<ScrollRect>() != null)
             return;
 
-        var panelRt = _content.parent as RectTransform;
+        var panelRt = (_scrollPlacementRoot != null ? _scrollPlacementRoot : (_content.parent as RectTransform));
         if (panelRt == null) return;
 
-        if (panelRt.rect.width < 240f)
+        bool usePlacementSlot = _scrollPlacementRoot != null;
+
+        // Раньше подгоняли ширину родителя _content — для отдельного Placement это ломает растягивающиеся RectTransform и смещает UI.
+        if (!usePlacementSlot && panelRt.rect.width < 240f)
             panelRt.sizeDelta = new Vector2(Mathf.Max(panelRt.sizeDelta.x, 480f), Mathf.Max(panelRt.sizeDelta.y, 128f));
 
         var scrollGo = new GameObject("ModelScrollArea", typeof(RectTransform));
         var scrollRt = scrollGo.GetComponent<RectTransform>();
         scrollRt.SetParent(panelRt, false);
-        scrollRt.SetSiblingIndex(_content.GetSiblingIndex());
-        scrollRt.anchorMin = new Vector2(0.04f, 0.14f);
-        scrollRt.anchorMax = new Vector2(0.96f, 0.58f);
+
+        // Индекс sibling от _content брался из другого родителя — при Placement скролл оказывался не там / сбоку.
+        if (usePlacementSlot)
+            scrollRt.SetAsLastSibling();
+        else
+            scrollRt.SetSiblingIndex(_content.GetSiblingIndex());
+
+        if (usePlacementSlot)
+        {
+            scrollRt.anchorMin = Vector2.zero;
+            scrollRt.anchorMax = Vector2.one;
+        }
+        else
+        {
+            scrollRt.anchorMin = _scrollAnchorMin;
+            scrollRt.anchorMax = _scrollAnchorMax;
+        }
+
         scrollRt.offsetMin = Vector2.zero;
         scrollRt.offsetMax = Vector2.zero;
+        scrollRt.anchoredPosition = Vector2.zero;
         scrollRt.localScale = Vector3.one;
 
         var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D), typeof(Image));
@@ -97,22 +143,64 @@ public class UIModelSelector : MonoBehaviour
         scr.movementType = ScrollRect.MovementType.Clamped;
         scr.scrollSensitivity = 35f;
 
+        EnsureContentLayout();
+    }
+
+    private void EnsureContentLayout()
+    {
+        if (_content == null)
+            return;
+
         var hlg = _content.GetComponent<HorizontalLayoutGroup>();
         if (hlg == null)
             hlg = _content.gameObject.AddComponent<HorizontalLayoutGroup>();
+
         hlg.padding = new RectOffset(4, 4, 4, 4);
         hlg.spacing = 8f;
-        hlg.childAlignment = TextAnchor.MiddleLeft;
+        hlg.childAlignment = _itemsAlignment;
         hlg.childControlWidth = true;
         hlg.childControlHeight = true;
         hlg.childForceExpandWidth = false;
         hlg.childForceExpandHeight = false;
 
+        // ContentSizeFitter + HorizontalLayoutGroup на одном Rect часто даёт ширину = viewport → видна одна карточка.
+        // Ширину считаем вручную в ApplyContentWidthFromChildren после спавна элементов.
         var fitter = _content.GetComponent<ContentSizeFitter>();
-        if (fitter == null)
-            fitter = _content.gameObject.AddComponent<ContentSizeFitter>();
-        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-        fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+        if (fitter != null)
+            Destroy(fitter);
+    }
+
+    private void ApplyContentWidthFromChildren()
+    {
+        if (_content == null) return;
+
+        var hlg = _content.GetComponent<HorizontalLayoutGroup>();
+        float padL = hlg != null ? hlg.padding.left : 0;
+        float padR = hlg != null ? hlg.padding.right : 0;
+        float spacing = hlg != null ? hlg.spacing : 8f;
+
+        int n = _content.childCount;
+        float total = padL + padR;
+        for (int i = 0; i < n; i++)
+        {
+            var child = _content.GetChild(i);
+            var le = child.GetComponent<LayoutElement>();
+            float w = 96f;
+            if (le != null && le.preferredWidth > 0f)
+                w = le.preferredWidth;
+            else
+            {
+                var crt = child as RectTransform;
+                if (crt != null && crt.rect.width > 1f)
+                    w = crt.rect.width;
+            }
+
+            total += w;
+            if (i < n - 1)
+                total += spacing;
+        }
+
+        _content.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Mathf.Max(total, 1f));
     }
 
     private void BuildItems()
@@ -138,6 +226,16 @@ public class UIModelSelector : MonoBehaviour
             if (le.preferredWidth <= 0) le.preferredWidth = 96f;
             if (le.preferredHeight <= 0) le.preferredHeight = 96f;
 
+            // Префаб с stretch-якорями ломает горизонтальный ряд: элементы накладываются / занимают всю ширину content.
+            var itemRt = go.GetComponent<RectTransform>();
+            if (itemRt != null)
+            {
+                itemRt.anchorMin = new Vector2(0f, 0.5f);
+                itemRt.anchorMax = new Vector2(0f, 0.5f);
+                itemRt.pivot = new Vector2(0.5f, 0.5f);
+                itemRt.sizeDelta = new Vector2(le.preferredWidth, le.preferredHeight);
+            }
+
             var button = go.GetComponent<Button>() ?? go.GetComponentInChildren<Button>();
             if (button != null)
                 button.onClick.AddListener(() => _modelManager.SetModel(index));
@@ -152,6 +250,8 @@ public class UIModelSelector : MonoBehaviour
         }
 
         Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_content);
+        ApplyContentWidthFromChildren();
         LayoutRebuilder.ForceRebuildLayoutImmediate(_content);
     }
 

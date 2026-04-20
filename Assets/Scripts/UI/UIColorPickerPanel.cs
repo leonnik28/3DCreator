@@ -180,7 +180,7 @@ public class UIColorPickerPanel : MonoBehaviour
             var go = new GameObject("Preset");
             go.transform.SetParent(_presetContainer);
             var rect = go.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(24, 24);
+            rect.sizeDelta = new Vector2(50, 50);
             var img = go.AddComponent<Image>();
             img.color = c;
             var btn = go.AddComponent<Button>();

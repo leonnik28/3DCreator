@@ -22,6 +22,7 @@ public class OrbitCameraController : MonoBehaviour
     private float _angleX;
     private float _angleY;
     private bool _isDragging;
+    private bool _inputEnabled = true;
 
     public Transform Target { get => _target; set => _target = value; }
     public float Distance { get => _distance; set => _distance = Mathf.Clamp(value, _minDistance, _maxDistance); }
@@ -41,6 +42,12 @@ public class OrbitCameraController : MonoBehaviour
     private void LateUpdate()
     {
         if (_target == null) return;
+        if (!_inputEnabled)
+        {
+            _isDragging = false;
+            ApplyOrbit();
+            return;
+        }
 
         if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
             _isDragging = true;
@@ -75,6 +82,13 @@ public class OrbitCameraController : MonoBehaviour
     {
         _target = target;
         ApplyOrbit();
+    }
+
+    public void SetInputEnabled(bool isEnabled)
+    {
+        _inputEnabled = isEnabled;
+        if (!isEnabled)
+            _isDragging = false;
     }
 
 }

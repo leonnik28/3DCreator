@@ -8,15 +8,11 @@ public class ImageLoaderController : MonoBehaviour
     [SerializeField] private GameObject _loadingIndicator;
 
     private TextureLoadService _textureLoadService;
-    private DecalManager _decalManager;
-    private IDecalEditor _editor;
 
     public event Action<Texture2D> OnImageLoaded;
 
-    public void Initialize(IDecalEditor editor, DecalManager decalManager)
+    public void Initialize()
     {
-        _editor = editor;
-        _decalManager = decalManager;
         _textureLoadService = new TextureLoadService(this);
 
         if (_galleryButton != null)

@@ -5,11 +5,14 @@ using DecalSystem.CornerResize;
 /// <summary>
 /// Угловая ручка для изменения размера изображения декали.
 /// </summary>
-public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler
+public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
     public enum CornerType { TopLeft, TopRight, BottomLeft, BottomRight }
 
     [SerializeField] private CornerType _cornerType;
+    [Header("Cursor")]
+    [SerializeField] private Texture2D _resizeCursor;
+    [SerializeField] private Vector2 _resizeCursorHotspot = new Vector2(16f, 16f);
     [Tooltip("Минимальный размер слоя в UI-единицах. 0 или меньше — авто (по размеру ручек).")]
     [SerializeField] private float _minSize = 0f;
     [Tooltip("Максимальный размер слоя в UI-единицах. 0 или меньше — без лимита.")]
@@ -93,6 +96,17 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler
         _targetRect.anchoredPosition = _dragStartPosition + positionDelta;
 
         _editor?.OnTransformChanged();
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (_resizeCursor != null)
+            Cursor.SetCursor(_resizeCursor, _resizeCursorHotspot, CursorMode.Auto);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
     }
 
     private Vector2 GetSizeDeltaForCorner(Vector2 delta, CornerType corner)

@@ -1,6 +1,7 @@
 using UnityEngine;
 using PreviewSystem.Services;
 using PreviewSystem.Interfaces;
+using Fotocentr.AI;
 using Fotocentr.Core;
 
 public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependencies
@@ -12,6 +13,10 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
 
     [Header("UI Panels")]
     [SerializeField] private UIDecalsActionPanel _actionPanel;
+    [SerializeField] private AIVisionPromptPanel _descriptionGenerationPanel;
+    [SerializeField] private GameObject _mainInterfaceRoot;
+    [SerializeField] private OrbitCameraController _orbitCameraController;
+    [SerializeField] private ModelRotator _modelRotator;
 
     [Header("Services (injected by CompositionRoot if empty)")]
     [SerializeField] private DecalManager _decalManager;
@@ -20,6 +25,7 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
     private DecalController _activeDecal;
     private IDecalRemovalService _removalService;
     private ISceneCapture _sceneCapture;
+    private bool _resumeAnimationAfterGeneratorClose;
 
     public void Inject(DecalManager decalManager, ISceneCapture sceneCapture)
     {
@@ -43,9 +49,16 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
         if (_sceneCapture == null)
             _sceneCapture = FindObjectOfType<SceneCaptureService>();
 
+        if (_orbitCameraController == null)
+            _orbitCameraController = FindObjectOfType<OrbitCameraController>();
+
+        if (_modelRotator == null)
+            _modelRotator = FindObjectOfType<ModelRotator>();
+
         InitializeServices();
         InitializeControllers();
         SubscribeToEvents();
+        ShowDescriptionGenerationWindow(false);
     }
 
     private void InitializeServices()
@@ -57,9 +70,8 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
     {
         _previewController.Initialize(this);
         _transformControls.Initialize(this, _decalManager);
-        _imageLoader.Initialize(this, _decalManager);
+        _imageLoader.Initialize();
 
-        // ?????????????? ?????? ???????? ? ???????? ????????
         _actionPanel?.Initialize(_removalService);
     }
 
@@ -79,7 +91,11 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
             _actionPanel.OnDeleteSelectedClicked += OnDeleteSelectedClicked;
             _actionPanel.OnClearAllClicked += OnClearAllClicked;
             _actionPanel.OnSnapshotClicked += OnSnapshotClicked;
+            _actionPanel.OnGenerateDescriptionClicked += OnGenerateDescriptionClicked;
         }
+
+        if (_descriptionGenerationPanel != null)
+            _descriptionGenerationPanel.OnCloseRequested += OnDescriptionGenerationCloseRequested;
 
         // Decal manager events
         if (_decalManager != null)
@@ -105,6 +121,43 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
     private void OnSnapshotClicked()
     {
         _sceneCapture?.TakeScreenshot();
+    }
+
+    private void OnGenerateDescriptionClicked()
+    {
+        ShowDescriptionGenerationWindow(true);
+    }
+
+    private void OnDescriptionGenerationCloseRequested()
+    {
+        ShowDescriptionGenerationWindow(false);
+    }
+
+    private void ShowDescriptionGenerationWindow(bool showGenerator)
+    {
+        if (_descriptionGenerationPanel != null)
+            _descriptionGenerationPanel.gameObject.SetActive(showGenerator);
+
+        if (_mainInterfaceRoot != null)
+            _mainInterfaceRoot.SetActive(!showGenerator);
+
+        if (_orbitCameraController != null)
+            _orbitCameraController.SetInputEnabled(!showGenerator);
+
+        if (_modelRotator != null)
+        {
+            if (showGenerator)
+            {
+                _resumeAnimationAfterGeneratorClose = _modelRotator.IsAnimating;
+                if (_resumeAnimationAfterGeneratorClose)
+                    _modelRotator.SetAnimating(false);
+            }
+            else if (_resumeAnimationAfterGeneratorClose)
+            {
+                _modelRotator.SetAnimating(true);
+                _resumeAnimationAfterGeneratorClose = false;
+            }
+        }
     }
 
     private void OnDecalLayerClicked(DecalController decal)
@@ -133,7 +186,7 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
         }
 
         _previewController.RemoveLayer(decal);
-        _actionPanel?.UpdateDeleteButtonState(); // ????????? ????????? ??????
+        _actionPanel?.UpdateDeleteButtonState();
     }
 
     private void OnDecalTransformChanged(DecalController decal)
@@ -146,16 +199,10 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
     {
         if (_activeDecal == decal) return;
 
-        if (_activeDecal != null)
-            _activeDecal.SetSelected(false);
-
         _activeDecal = decal;
 
-        if (_activeDecal != null)
-            _activeDecal.SetSelected(true);
-
         UpdateUIFromSelectedDecal();
-        _actionPanel?.UpdateDeleteButtonState(); // ????????? ????????? ??????
+        _actionPanel?.UpdateDeleteButtonState();
     }
 
     private void UpdateUIFromSelectedDecal()
@@ -209,7 +256,11 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
             _actionPanel.OnDeleteSelectedClicked -= OnDeleteSelectedClicked;
             _actionPanel.OnClearAllClicked -= OnClearAllClicked;
             _actionPanel.OnSnapshotClicked -= OnSnapshotClicked;
+            _actionPanel.OnGenerateDescriptionClicked -= OnGenerateDescriptionClicked;
         }
+
+        if (_descriptionGenerationPanel != null)
+            _descriptionGenerationPanel.OnCloseRequested -= OnDescriptionGenerationCloseRequested;
 
         if (_decalManager != null)
         {

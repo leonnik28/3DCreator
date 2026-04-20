@@ -21,6 +21,7 @@ namespace Fotocentr.AI
         [SerializeField] private TMP_Text _statusText;
         [SerializeField] private Button _sendButton;
         [SerializeField] private Button _copyButton;
+        [SerializeField] private Button _closeButton;
         [SerializeField] private Toggle _includeScreenshotToggle;
 
         [Header("Dependencies")]
@@ -42,6 +43,7 @@ namespace Fotocentr.AI
         private ISceneCapture _sceneCapture;
         private OpenAIVisionClient _client;
         private bool _isBusy;
+        public event Action OnCloseRequested;
 
         [Serializable]
         private class PersistedSettings
@@ -145,6 +147,9 @@ namespace Fotocentr.AI
 
             if (_copyButton != null)
                 _copyButton.onClick.AddListener(OnCopyClicked);
+
+            if (_closeButton != null)
+                _closeButton.onClick.AddListener(OnCloseClicked);
 
             if (_statusText != null && string.IsNullOrWhiteSpace(_statusText.text))
                 _statusText.text = "";
@@ -545,6 +550,14 @@ namespace Fotocentr.AI
             if (string.IsNullOrWhiteSpace(_outputText.text)) return;
             GUIUtility.systemCopyBuffer = _outputText.text;
             SetStatus("Copied to clipboard.", false);
+        }
+
+        private void OnCloseClicked()
+        {
+            if (_isBusy)
+                return;
+
+            OnCloseRequested?.Invoke();
         }
     }
 }

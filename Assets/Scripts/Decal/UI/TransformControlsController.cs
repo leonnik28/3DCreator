@@ -14,7 +14,6 @@ public class TransformControlsController : MonoBehaviour
     [SerializeField] private DecalCenterDragZone _centerDragZone;
 
     private IDecalEditor _editor;
-    private DecalManager _decalManager;
     private bool _lockAspect = true;
     private Transform _handlesOriginalParent;
     private const float HandleSize = 24f;
@@ -24,7 +23,6 @@ public class TransformControlsController : MonoBehaviour
     public void Initialize(IDecalEditor editor, DecalManager decalManager)
     {
         _editor = editor;
-        _decalManager = decalManager;
 
         if (_handlesCanvasGroup != null)
             _handlesOriginalParent = _handlesCanvasGroup.transform.parent;
@@ -105,10 +103,12 @@ public class TransformControlsController : MonoBehaviour
         handlesRect.offsetMax = Vector2.zero;
 
         float hw = HandleSize * 0.5f;
-        PositionHandle(_topLeftHandle, 0, 1, hw, -hw);
-        PositionHandle(_topRightHandle, 1, 1, -hw, -hw);
-        PositionHandle(_bottomLeftHandle, 0, 0, hw, hw);
-        PositionHandle(_bottomRightHandle, 1, 0, -hw, hw);
+        float edgeInset = hw * 0.4f; // было hw, стало в 2 раза ближе к краю
+
+        PositionHandle(_topLeftHandle, 0, 1, edgeInset, -edgeInset);
+        PositionHandle(_topRightHandle, 1, 1, -edgeInset, -edgeInset);
+        PositionHandle(_bottomLeftHandle, 0, 0, edgeInset, edgeInset);
+        PositionHandle(_bottomRightHandle, 1, 0, -edgeInset, edgeInset);
 
         if (_rotateHandle != null)
         {

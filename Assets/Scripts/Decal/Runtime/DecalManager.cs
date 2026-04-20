@@ -4,9 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Fotocentr.Decals.Services;
 
-/// <summary>
-/// �������� �� ��������, �����, ���������� � �������� ���� ������� � �����.
-/// </summary>
 public class DecalManager : MonoBehaviour
 {
     [Header("Settings")]
@@ -28,7 +25,6 @@ public class DecalManager : MonoBehaviour
     private DecalController _selectedDecal;
     private Camera _mainCamera;
     private DecalTransformService _transformService;
-    private int _nextDrawOrder;
 
     public IReadOnlyList<DecalController> ActiveDecals => _activeDecals;
     public DecalController SelectedDecal => _selectedDecal;
@@ -86,7 +82,6 @@ public class DecalManager : MonoBehaviour
             return;
 
         decal.CreationTime = Time.time;
-        decal.SetDrawOrder(_nextDrawOrder++);
         decal.OnDeleted += HandleDecalDeleted;
         _activeDecals.Add(decal);
 
@@ -94,9 +89,6 @@ public class DecalManager : MonoBehaviour
         SelectDecal(decal);
     }
 
-    /// <summary>
-    /// ������� ��������� ������ � ������� CreationTime.
-    /// </summary>
     public void SelectNextDecal()
     {
         if (_activeDecals.Count == 0)
@@ -117,25 +109,11 @@ public class DecalManager : MonoBehaviour
         if (_selectedDecal == decal)
             return;
 
-        if (_selectedDecal != null)
-            _selectedDecal.SetSelected(false);
-
         _selectedDecal = decal;
-
-        if (_selectedDecal != null)
-        {
-            _selectedDecal.SetSelected(true);
-            // Делает выбранную декаль "самой верхней" и в 3D (через drawOrder),
-            // и в 2D (через стратегии PreviewWindowController).
-            _selectedDecal.SetDrawOrder(_nextDrawOrder++);
-        }
 
         OnDecalSelected?.Invoke(_selectedDecal);
     }
 
-    /// <summary>
-    /// �������� �������� ������ �� ������ 2D-���� (��������).
-    /// </summary>
     public void UpdateEditingDecal(RectTransform layerRect, RectTransform previewRect, Canvas canvas, float rotation)
     {
         if (_selectedDecal == null || _transformService == null)
@@ -168,7 +146,6 @@ public class DecalManager : MonoBehaviour
             return;
 
         _decalFactory.DestroyDecal(decal);
-        // ������ ��������� HandleDecalDeleted
     }
 
     public void ClearAllDecals()

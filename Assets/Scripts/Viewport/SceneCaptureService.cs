@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.IO;
+using System.Text;
 using Fotocentr.Core;
 
 #if UNITY_EDITOR
@@ -9,8 +10,9 @@ using UnityEditor.Recorder.Input;
 #endif
 
 /// <summary>
-/// Съёмка сцены: скриншот (UI на кадре скрывается) и видео (UI остаётся для управления; в ролик не попадает при CaptureUI = false).
-/// Видео в редакторе — Unity Recorder (MP4). В билде запись недоступна.
+/// Съёмка сцены: скриншот и видео.
+/// В редакторе используется Unity Recorder (MP4), а в Play/билде — ffmpeg (MP4) при наличии ffmpeg.exe.
+/// Если ffmpeg недоступен, используется fallback в PNG-последовательность.
 /// </summary>
 public class SceneCaptureService : MonoBehaviour, ISceneCapture
 {
@@ -23,9 +25,22 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
     [SerializeField] private int _width = 1920;
     [SerializeField] private int _height = 1080;
     [Tooltip("Целевой FPS записи (Unity Recorder, Constant).")]
-    [SerializeField] private float _recorderFrameRate = 30f;
+    [SerializeField] private float _recorderFrameRate = 60f;
+    [Tooltip("FPS для runtime-записи (последовательность PNG в папку).")]
+    [SerializeField] private float _runtimeCaptureFrameRate = 60f;
+    [Tooltip("Имя/путь к ffmpeg. Для билда можно положить ffmpeg.exe рядом с .exe и указать только имя.")]
+    [SerializeField] private string _ffmpegExecutable = "ffmpeg.exe";
+    [Tooltip("Битрейт MP4 в kbps для runtime-записи через ffmpeg.")]
+    [SerializeField] private int _runtimeVideoBitrateKbps = 12000;
 
     private bool _isRecording;
+    private Coroutine _runtimeCaptureCoroutine;
+    private bool _runtimeWritesMp4;
+    private string _runtimeFramesDirectory;
+    private string _runtimeOutputMp4Path;
+    private int _runtimeFrameIndex;
+    private System.Diagnostics.Process _ffmpegProcess;
+    private Stream _ffmpegInputStream;
 
 #if UNITY_EDITOR
     private RecorderController _recorderController;
@@ -113,6 +128,45 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
         if (!Application.isPlaying)
             return;
 
+        if (TryStartRecorderInEditor())
+            return;
+#endif
+        StartRuntimeFrameCapture();
+    }
+
+    public void StopVideoRecording()
+    {
+        if (!_isRecording)
+            return;
+
+#if UNITY_EDITOR
+        if (_recorderController != null)
+        {
+            try
+            {
+                _recorderController.StopRecording();
+            }
+            finally
+            {
+                _isRecording = false;
+                _recorderController = null;
+                TearDownRecorder();
+
+                var mp4 = _recorderOutputBasePath + ".mp4";
+                if (File.Exists(mp4))
+                    Debug.Log($"Видео сохранено (Unity Recorder): {mp4}");
+                else
+                    Debug.Log($"Запись остановлена. Ожидаемый файл: {mp4}");
+            }
+            return;
+        }
+#endif
+        StopRuntimeFrameCapture();
+    }
+
+#if UNITY_EDITOR
+    private bool TryStartRecorderInEditor()
+    {
         TearDownRecorder();
 
         var recordingsDir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Recordings"));
@@ -144,45 +198,256 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
         {
             Debug.LogError($"Unity Recorder PrepareRecording: {e.Message}");
             TearDownRecorder();
-            return;
+            return false;
         }
 
         if (!_recorderController.StartRecording())
         {
             Debug.LogError("Unity Recorder StartRecording вернул false (подробности в Console).");
             TearDownRecorder();
-            return;
+            return false;
         }
 
         _isRecording = true;
-#else
-        Debug.LogWarning("Запись видео через Unity Recorder доступна только в Unity Editor (Play Mode), не в билде.");
+        return true;
+    }
 #endif
+
+    private void StartRuntimeFrameCapture()
+    {
+        var recordingsDir = Path.Combine(Application.persistentDataPath, "Recordings");
+        Directory.CreateDirectory(recordingsDir);
+        var stamp = System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        _runtimeOutputMp4Path = Path.Combine(recordingsDir, $"capture_{stamp}.mp4");
+
+        _runtimeWritesMp4 = TryStartFfmpegRuntimeCapture(_runtimeOutputMp4Path);
+        if (!_runtimeWritesMp4)
+        {
+            _runtimeFramesDirectory = Path.Combine(recordingsDir, $"capture_{stamp}_frames");
+            Directory.CreateDirectory(_runtimeFramesDirectory);
+        }
+        else
+        {
+            _runtimeFramesDirectory = null;
+        }
+
+        _runtimeFrameIndex = 0;
+        _isRecording = true;
+        _runtimeCaptureCoroutine = StartCoroutine(RuntimeCaptureCoroutine());
+
+        if (_runtimeWritesMp4)
+            UnityEngine.Debug.Log($"Runtime запись MP4 запущена: {_runtimeOutputMp4Path}");
+        else
+            UnityEngine.Debug.Log($"Runtime запись запущена в PNG fallback. Кадры: {_runtimeFramesDirectory}");
     }
 
-    public void StopVideoRecording()
+    private void StopRuntimeFrameCapture()
     {
-#if UNITY_EDITOR
-        if (!_isRecording || _recorderController == null)
+        if (_runtimeCaptureCoroutine != null)
+        {
+            StopCoroutine(_runtimeCaptureCoroutine);
+            _runtimeCaptureCoroutine = null;
+        }
+
+        StopFfmpegRuntimeCapture();
+        _isRecording = false;
+
+        if (_runtimeWritesMp4)
+        {
+            if (File.Exists(_runtimeOutputMp4Path))
+                UnityEngine.Debug.Log($"Runtime MP4 сохранен: {_runtimeOutputMp4Path}");
+            else
+                UnityEngine.Debug.LogWarning($"Runtime MP4 не найден по пути: {_runtimeOutputMp4Path}");
+        }
+        else
+        {
+            WriteRuntimeCaptureInfo();
+            UnityEngine.Debug.Log($"Runtime запись остановлена. Сохранено кадров: {_runtimeFrameIndex}. Папка: {_runtimeFramesDirectory}");
+        }
+    }
+
+    private IEnumerator RuntimeCaptureCoroutine()
+    {
+        float fps = Mathf.Max(1f, _runtimeCaptureFrameRate);
+        var wait = new WaitForSeconds(1f / fps);
+
+        while (_isRecording)
+        {
+            yield return new WaitForEndOfFrame();
+            if (_runtimeWritesMp4)
+                CaptureRuntimeFrameToFfmpeg();
+            else
+                CaptureRuntimeFrameToPng();
+            yield return wait;
+        }
+    }
+
+    private void CaptureRuntimeFrameToPng()
+    {
+        if (_captureCamera == null)
             return;
+
+        var rt = new RenderTexture(_width, _height, 24);
+        var prevTarget = _captureCamera.targetTexture;
+        _captureCamera.targetTexture = rt;
+        _captureCamera.Render();
+        _captureCamera.targetTexture = prevTarget;
+
+        int outWidth = _width;
+        int outHeight = _height;
+
+        var tex = new Texture2D(outWidth, outHeight, TextureFormat.RGB24, false);
+        RenderTexture.active = rt;
+        tex.ReadPixels(new Rect(0, 0, _width, _height), 0, 0);
+        tex.Apply();
+        RenderTexture.active = null;
+
+        var filePath = Path.Combine(_runtimeFramesDirectory, $"frame_{_runtimeFrameIndex:D06}.png");
+        File.WriteAllBytes(filePath, tex.EncodeToPNG());
+        _runtimeFrameIndex++;
+
+        Destroy(rt);
+        Destroy(tex);
+    }
+
+    private void CaptureRuntimeFrameToFfmpeg()
+    {
+        if (_captureCamera == null || _ffmpegInputStream == null)
+            return;
+
+        var rt = new RenderTexture(_width, _height, 24);
+        var prevTarget = _captureCamera.targetTexture;
+        _captureCamera.targetTexture = rt;
+        _captureCamera.Render();
+        _captureCamera.targetTexture = prevTarget;
+
+        int outWidth = _width;
+        int outHeight = _height;
+
+        var tex = new Texture2D(outWidth, outHeight, TextureFormat.RGB24, false);
+        RenderTexture.active = rt;
+        tex.ReadPixels(new Rect(0, 0, _width, _height), 0, 0);
+        tex.Apply();
+        RenderTexture.active = null;
+
+        var data = tex.GetRawTextureData();
+        _ffmpegInputStream.Write(data, 0, data.Length);
+        _runtimeFrameIndex++;
+
+        Destroy(rt);
+        Destroy(tex);
+    }
+
+    private bool TryStartFfmpegRuntimeCapture(string outputPath)
+    {
+        int outWidth = _width;
+        int outHeight = _height;
+        int bitrateKbps = Mathf.Max(500, _runtimeVideoBitrateKbps);
+        float fps = Mathf.Max(1f, _runtimeCaptureFrameRate);
+
+        string ffmpegPath = ResolveFfmpegPath();
+        if (string.IsNullOrEmpty(ffmpegPath) || !File.Exists(ffmpegPath))
+        {
+            UnityEngine.Debug.LogWarning("ffmpeg.exe не найден, включается PNG fallback для runtime-записи.");
+            return false;
+        }
+
+        string args =
+            $"-y -f rawvideo -pix_fmt rgb24 -s {outWidth}x{outHeight} -r {fps.ToString(System.Globalization.CultureInfo.InvariantCulture)} " +
+            "-i - -an -c:v libx264 -preset veryfast -pix_fmt yuv420p -vf vflip " +
+            $"-b:v {bitrateKbps}k \"{outputPath}\"";
+
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = ffmpegPath,
+            Arguments = args,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardInput = true,
+            RedirectStandardError = true
+        };
 
         try
         {
-            _recorderController.StopRecording();
+            _ffmpegProcess = new System.Diagnostics.Process { StartInfo = psi };
+            _ffmpegProcess.Start();
+            _ffmpegInputStream = _ffmpegProcess.StandardInput.BaseStream;
+            return true;
         }
-        finally
+        catch (System.Exception e)
         {
-            _isRecording = false;
-            _recorderController = null;
-            TearDownRecorder();
-
-            var mp4 = _recorderOutputBasePath + ".mp4";
-            if (File.Exists(mp4))
-                Debug.Log($"Видео сохранено (Unity Recorder): {mp4}");
-            else
-                Debug.Log($"Запись остановлена. Ожидаемый файл: {mp4}");
+            UnityEngine.Debug.LogWarning($"Не удалось запустить ffmpeg ({ffmpegPath}): {e.Message}. Используется PNG fallback.");
+            _ffmpegProcess = null;
+            _ffmpegInputStream = null;
+            return false;
         }
-#endif
+    }
+
+    private void StopFfmpegRuntimeCapture()
+    {
+        if (_ffmpegInputStream != null)
+        {
+            try
+            {
+                _ffmpegInputStream.Flush();
+                _ffmpegInputStream.Close();
+            }
+            catch { /* ignored */ }
+            _ffmpegInputStream = null;
+        }
+
+        if (_ffmpegProcess != null)
+        {
+            try
+            {
+                if (!_ffmpegProcess.HasExited)
+                {
+                    _ffmpegProcess.WaitForExit(5000);
+                    if (!_ffmpegProcess.HasExited)
+                        _ffmpegProcess.Kill();
+                }
+            }
+            catch { /* ignored */ }
+            finally
+            {
+                _ffmpegProcess.Dispose();
+                _ffmpegProcess = null;
+            }
+        }
+    }
+
+    private string ResolveFfmpegPath()
+    {
+        if (string.IsNullOrWhiteSpace(_ffmpegExecutable))
+            return null;
+
+        if (Path.IsPathRooted(_ffmpegExecutable))
+            return _ffmpegExecutable;
+
+        string appDir = Path.GetDirectoryName(Application.dataPath);
+        string nearExecutable = Path.Combine(appDir, _ffmpegExecutable);
+        if (File.Exists(nearExecutable))
+            return nearExecutable;
+
+        return _ffmpegExecutable;
+    }
+
+    private void WriteRuntimeCaptureInfo()
+    {
+        if (string.IsNullOrEmpty(_runtimeFramesDirectory))
+            return;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Runtime capture export");
+        sb.AppendLine($"created_utc={System.DateTime.UtcNow:O}");
+        sb.AppendLine($"fps={Mathf.Max(1f, _runtimeCaptureFrameRate):F3}");
+        sb.AppendLine($"frames={_runtimeFrameIndex}");
+        sb.AppendLine($"size={_width}x{_height}");
+        sb.AppendLine();
+        sb.AppendLine("ffmpeg example:");
+        sb.AppendLine("ffmpeg -framerate 30 -i frame_%06d.png -c:v libx264 -pix_fmt yuv420p output.mp4");
+
+        File.WriteAllText(Path.Combine(_runtimeFramesDirectory, "_capture_info.txt"), sb.ToString());
     }
 
 #if UNITY_EDITOR
@@ -241,6 +506,12 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
         }
     }
 #endif
+
+    private void OnDisable()
+    {
+        if (_isRecording && _runtimeCaptureCoroutine != null)
+            StopRuntimeFrameCapture();
+    }
 
     private void SetUIVisible(bool visible)
     {

@@ -1,8 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// ������ ������������� 2D-������ � 3D-�������. ������ ���� ���� ��� ��������.
-/// </summary>
 public class DecalTransformService
 {
     private readonly Camera _camera;
@@ -25,9 +22,6 @@ public class DecalTransformService
         _projectionZone = projectionZone;
     }
 
-    /// <summary>
-    /// ��������� 3D-������ �� ������ 2D-����.
-    /// </summary>
     public void UpdateTransform(
         DecalController decal,
         RectTransform layerRect,
@@ -48,13 +42,6 @@ public class DecalTransformService
                     decal.PlaceOnSurface(hit.point, hit.normal);
                 else
                     decal.PlaceOnSurface(zoneWorldPoint, _projectionZone.transform.forward);
-            }
-
-            // Маска полотна: даже если часть слоя вышла за пределы окна превью,
-            // на 3D‑объекте должна отображаться только видимая часть.
-            if (TryGetClippedRectInPreview(layerRect, previewRect, canvas, out var maskCenter, out var maskSize))
-            {
-                decal.SetCanvasMask(maskCenter, maskSize);
             }
         }
         else
@@ -85,9 +72,6 @@ public class DecalTransformService
 
             decal.SetSize(worldH * 0.5f);
             decal.SetAspectRatio(worldW / worldH);
-
-            decal.SetUpHint(_projectionZone.transform.up);
-            decal.SetRollDegrees(rotation);
         }
         else
         {

@@ -29,7 +29,7 @@ public class DecalRotateHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
         if (img != null)
         {
             img.raycastTarget = true;
-            img.color = new Color(1, 1, 1, 0.001f);
+            img.color = new Color(1, 1, 1, 1f);
         }
     }
 

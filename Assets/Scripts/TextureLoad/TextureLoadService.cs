@@ -5,12 +5,12 @@ using System.Collections;
 
 public class TextureLoadService
 {
-    private MonoBehaviour coroutineRunner;
-    private int maxTextureSize = 1024;
+    private MonoBehaviour _coroutineRunner;
+    private int _maxTextureSize = 1024;
 
     public TextureLoadService(MonoBehaviour runner)
     {
-        coroutineRunner = runner;
+        _coroutineRunner = runner;
     }
 
     public void LoadFromGallery(Action<Texture2D> onSuccess, Action<string> onError)
@@ -19,7 +19,7 @@ public class TextureLoadService
         string path = UnityEditor.EditorUtility.OpenFilePanel("Select Image", "", "png,jpg,jpeg");
         if (!string.IsNullOrEmpty(path))
         {
-            coroutineRunner.StartCoroutine(LoadFromFileCoroutine(path, onSuccess, onError));
+            _coroutineRunner.StartCoroutine(LoadFromFileCoroutine(path, onSuccess, onError));
         }
 #elif UNITY_ANDROID || UNITY_IOS
         NativeGallery.Permission permission = NativeGallery.GetImageFromGallery((path) =>
@@ -60,17 +60,17 @@ public class TextureLoadService
         int width = original.width;
         int height = original.height;
 
-        if (width > maxTextureSize || height > maxTextureSize)
+        if (width > _maxTextureSize || height > _maxTextureSize)
         {
             float ratio = (float)width / height;
             if (width > height)
             {
-                width = maxTextureSize;
+                width = _maxTextureSize;
                 height = Mathf.RoundToInt(width / ratio);
             }
             else
             {
-                height = maxTextureSize;
+                height = _maxTextureSize;
                 width = Mathf.RoundToInt(height * ratio);
             }
 
