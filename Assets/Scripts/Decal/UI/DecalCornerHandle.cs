@@ -94,6 +94,7 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
         // Применяем изменения
         _targetRect.sizeDelta = newSize;
         _targetRect.anchoredPosition = _dragStartPosition + positionDelta;
+        DecalLayerDragHandler.EnsureLayerFitsInsideParent(_targetRect, parentRect);
 
         _editor?.OnTransformChanged();
     }

@@ -17,6 +17,7 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
     [SerializeField] private RectTransform _previewWindow;
     [SerializeField] private CanvasGroup _handlesCanvasGroup;
     [SerializeField] private TextMeshProUGUI _noDecalText;
+    [SerializeField] private ModelManager _modelManager;
 
     [Header("Layer Settings")]
     [SerializeField] private GameObject _uiDecalLayerPrefab;
@@ -24,6 +25,7 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
 
     [Header("Visual Settings")]
     [SerializeField] private LayerVisualParameters _visualParameters;
+    [SerializeField, Min(0.01f)] private float _defaultCanvasAspect = 1f;
 
     public event Action<DecalController> OnDecalLayerClicked;
 
@@ -46,11 +48,23 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
     {
         InitializeStrategies();
         ValidateReferences();
+        ResolveModelManager();
     }
 
     private void Update()
     {
         CheckWindowResize();
+    }
+
+    private void Start()
+    {
+        SubscribeToModelChanges();
+        ApplyAspectForCurrentModel();
+    }
+
+    private void OnDestroy()
+    {
+        UnsubscribeFromModelChanges();
     }
 
     #endregion
@@ -67,10 +81,49 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
     private void ValidateReferences()
     {
         if (_layersContainer == null)
-            _layersContainer = _previewWindow;
+            _layersContainer = EnsureDefaultLayersContainer();
 
         if (_uiDecalLayerPrefab == null)
             Debug.LogError("UIDecalLayer prefab is not assigned!");
+    }
+
+    private Transform EnsureDefaultLayersContainer()
+    {
+        if (_previewWindow == null)
+            return null;
+
+        var existing = _previewWindow.Find("PreviewContent");
+        if (existing != null)
+            return existing;
+
+        var containerGo = new GameObject("PreviewContent", typeof(RectTransform));
+        var rect = containerGo.GetComponent<RectTransform>();
+        rect.SetParent(_previewWindow, false);
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = _previewWindow.rect.size;
+        rect.anchoredPosition = Vector2.zero;
+        rect.localScale = Vector3.one;
+        return rect;
+    }
+
+    private void ResolveModelManager()
+    {
+        if (_modelManager == null)
+            _modelManager = FindObjectOfType<ModelManager>();
+    }
+
+    private void SubscribeToModelChanges()
+    {
+        if (_modelManager != null)
+            _modelManager.OnModelChanged += OnModelChanged;
+    }
+
+    private void UnsubscribeFromModelChanges()
+    {
+        if (_modelManager != null)
+            _modelManager.OnModelChanged -= OnModelChanged;
     }
 
     public void Initialize(IDecalEditor editor)
@@ -84,6 +137,7 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
         SetInitialState();
 
         _lastWindowSize = _previewWindow.rect.size;
+        ApplyAspectForCurrentModel();
     }
 
     private void InitializeCamera()
@@ -151,9 +205,13 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
 
     private void CheckWindowResize()
     {
-        if (_previewWindow != null && _previewWindow.rect.size != _lastWindowSize)
+        if (_previewWindow == null)
+            return;
+
+        if (_previewWindow.rect.size != _lastWindowSize)
         {
             _lastWindowSize = _previewWindow.rect.size;
+            ApplyAspectForCurrentModel();
             OnWindowResized();
         }
     }
@@ -166,6 +224,71 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
         }
     }
 
+    private void OnModelChanged(GameObject model, int index)
+    {
+        ApplyAspectForModel(model);
+    }
+
+    private void ApplyAspectForCurrentModel()
+    {
+        ApplyAspectForModel(_modelManager != null ? _modelManager.CurrentModel : null);
+    }
+
+    private void ApplyAspectForModel(GameObject model)
+    {
+        var workingArea = GetWorkingAreaRect();
+        if (_previewWindow == null || workingArea == null)
+            return;
+
+        float aspect = GetAspectForModel(model);
+        if (aspect <= 0f)
+            aspect = _defaultCanvasAspect;
+
+        FitWorkingAreaToAspect(workingArea, aspect);
+        OnWindowResized();
+    }
+
+    private float GetAspectForModel(GameObject model)
+    {
+        if (model == null)
+            return _defaultCanvasAspect;
+
+        var projectionZone = model.GetComponentInChildren<ModelProjectionZone>(true);
+        if (projectionZone == null || projectionZone.CanvasAspect <= 0f)
+            return _defaultCanvasAspect;
+
+        return projectionZone.CanvasAspect;
+    }
+
+    private void FitWorkingAreaToAspect(RectTransform workingArea, float aspect)
+    {
+        float availableWidth = Mathf.Max(_previewWindow.rect.width, 1f);
+        float availableHeight = Mathf.Max(_previewWindow.rect.height, 1f);
+        float availableAspect = availableWidth / availableHeight;
+
+        float targetWidth;
+        float targetHeight;
+
+        if (aspect >= availableAspect)
+        {
+            targetWidth = availableWidth;
+            targetHeight = targetWidth / aspect;
+        }
+        else
+        {
+            targetHeight = availableHeight;
+            targetWidth = targetHeight * aspect;
+        }
+
+        workingArea.anchorMin = new Vector2(0.5f, 0.5f);
+        workingArea.anchorMax = new Vector2(0.5f, 0.5f);
+        workingArea.pivot = new Vector2(0.5f, 0.5f);
+        workingArea.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
+        workingArea.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeight);
+        workingArea.anchoredPosition = Vector2.zero;
+        workingArea.localScale = Vector3.one;
+    }
+
     #endregion
 
     #region Layer Management
@@ -174,7 +297,7 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
     {
         if (decal == null || _decalLayers.ContainsKey(decal)) return;
 
-        var layer = _layerFactory.Create(decal, _previewWindow);
+        var layer = _layerFactory.Create(decal, GetWorkingAreaRect());
         if (layer == null) return;
 
         layer.OnLayerClicked += OnLayerClicked;
@@ -267,7 +390,7 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
 
     #region Public Accessors
 
-    public RectTransform GetRectTransform() => _previewWindow;
+    public RectTransform GetRectTransform() => GetWorkingAreaRect();
     public RectTransform GetCanvasRect() => _canvasRect;
 
     public Canvas GetCanvas() => _canvasRect != null ? _canvasRect.GetComponentInParent<Canvas>() : null;
@@ -275,10 +398,15 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
     public RectTransform GetLayerRect(DecalController decal)
     {
         if (decal == null || !_decalLayers.TryGetValue(decal, out var layer))
-            return _previewWindow;
+            return GetWorkingAreaRect();
         return layer.RectTransform;
     }
     public ILayerVisualParameters GetParameters() => _visualParameters;
+
+    private RectTransform GetWorkingAreaRect()
+    {
+        return _layersContainer as RectTransform ?? _previewWindow;
+    }
 
     #endregion
 }

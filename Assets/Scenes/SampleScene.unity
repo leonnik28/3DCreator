@@ -4389,12 +4389,14 @@ MonoBehaviour:
   _previewWindow: {fileID: 1588488406}
   _handlesCanvasGroup: {fileID: 1875708690}
   _noDecalText: {fileID: 22733351}
+  _modelManager: {fileID: 2124849922}
   _uiDecalLayerPrefab: {fileID: 7588424982351673518, guid: d919b2a1471eebd41972818e544c93b1, type: 3}
   _layersContainer: {fileID: 236620121}
   _visualParameters:
     _outlineColor: {r: 1, g: 0.8, b: 0, a: 1}
     _dimColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.7}
     _outlineWidth: 0.02
+  _defaultCanvasAspect: 1
 --- !u!1 &748911273
 GameObject:
   m_ObjectHideFlags: 0

@@ -110,6 +110,7 @@ GameObject:
   - component: {fileID: 7293287616112569530}
   - component: {fileID: 3319020724775802256}
   - component: {fileID: 7801383343380783268}
+  - component: {fileID: -6772411923385345556}
   m_Layer: 0
   m_Name: Mug
   m_TagString: Untagged
@@ -146,12 +147,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8e4c91d5f2a4e7b9c3d6a1e8f0b2d4c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _mugRenderer: {fileID: 3247493740277539413}
+  _objectRenderer: {fileID: 3247493740277539413}
   _materialIndex: 0
+  _projectionKind: 0
   _previewController: {fileID: 0}
   _decalManager: {fileID: 0}
   _baseColor: {r: 1, g: 1, b: 1, a: 1}
   _vScale: 0.1285
+  _planeFrontSign: 1
+  _rectCurvature: 0
   _noPrintCenterU: 0
   _noPrintHalfU: 0.1
   _noPrintAtCanvasEdges: 1
@@ -176,6 +180,21 @@ MonoBehaviour:
     DisplayName: OUT
     TargetRenderer: {fileID: 3247493740277539413}
     MaterialIndex: 0
+--- !u!114 &-6772411923385345556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7961562453762209280}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3e48201aad6f4469738045fecb6cfa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _zoneHeight: 1
+  _offset: {x: 0, y: 0, z: 0}
+  _canvasAspect: 2.6
 --- !u!1 &8462998783035763555
 GameObject:
   m_ObjectHideFlags: 0

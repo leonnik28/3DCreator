@@ -132,6 +132,7 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerCli
     public void UpdateWindowSize()
     {
         FitToWindow();
+        DecalLayerDragHandler.EnsureLayerFitsInsideParent(_layerRect, _parentRect);
     }
 
     public void SetSelected(bool selected)

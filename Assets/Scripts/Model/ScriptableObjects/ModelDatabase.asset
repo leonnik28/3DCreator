@@ -16,6 +16,12 @@ MonoBehaviour:
   - DisplayName: "\u041A\u0440\u0443\u0436\u043A\u0430"
     Prefab: {fileID: 7961562453762209280, guid: ec5e36e01c51c4f499565e871f0aa905, type: 3}
     Thumbnail: {fileID: 21300000, guid: 2e38ccf8344072047b23dab8b45efeb6, type: 3}
-  - DisplayName: "\u041A\u0440\u0443\u0436\u043A\u0430 2"
-    Prefab: {fileID: 230931659851563336, guid: 31843133b770b174cb4b7dc0c663da81, type: 3}
+  - DisplayName: "\u041F\u043E\u0434\u0443\u0448\u043A\u0430"
+    Prefab: {fileID: 2437967773983282473, guid: 3a3f68697ca3a054a99e12093d971db6, type: 3}
     Thumbnail: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  - DisplayName: "\u041F\u043E\u0441\u0442\u0435\u0440"
+    Prefab: {fileID: 1153353879258706965, guid: a29bb113ecc41ba49833cb78f5dba979, type: 3}
+    Thumbnail: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
+  - DisplayName: "\u0424\u0443\u0442\u0431\u043E\u043B\u043A\u0430"
+    Prefab: {fileID: 3159746871703878492, guid: 0cfc5ee56c5009247a9abd46e65a4ace, type: 3}
+    Thumbnail: {fileID: 21300000, guid: d8781abacd35da0418c7bc7644d51c03, type: 3}
