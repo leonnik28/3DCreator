@@ -117,8 +117,8 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _StretchU: 1.29
-    - _StretchV: -0.71
+    - _StretchU: 1
+    - _StretchV: 1
     - _Surface: 0
     - _WorkflowMode: 1
     - _ZWrite: 1

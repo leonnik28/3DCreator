@@ -15,7 +15,11 @@ public class ModelProjectionZone : MonoBehaviour
     [Tooltip("Пропорция 2D полотна (ширина/высота)")]
     [SerializeField] private float _canvasAspect = 1f;
 
+    [Tooltip("Если включено, оси зоны берутся с transform этой зоны, а не с renderer. Полезно для импортированных плоских мешей с дочерним поворотом.")]
+    [SerializeField] private bool _useZoneTransformAxes = false;
+
     public float ZoneHeight => _zoneHeight;
     public Vector3 Offset => _offset;
     public float CanvasAspect => _canvasAspect;
+    public bool UseZoneTransformAxes => _useZoneTransformAxes;
 }

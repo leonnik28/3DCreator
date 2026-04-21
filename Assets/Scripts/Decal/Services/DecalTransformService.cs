@@ -37,11 +37,12 @@ public class DecalTransformService
             if (TryGetClippedRectInPreview(layerRect, previewRect, canvas, out var clippedCenter, out var clippedSize))
             {
                 var zoneWorldPoint = GetZoneWorldPoint(clippedCenter);
-                var ray = new Ray(zoneWorldPoint + _projectionZone.transform.forward * 0.5f, -_projectionZone.transform.forward);
+                GetProjectionSurfaceBasis(out _, out _, out _, out Vector3 surfaceNormal);
+                var ray = new Ray(zoneWorldPoint + surfaceNormal * 0.5f, -surfaceNormal);
                 if (Physics.Raycast(ray, out var hit, 5f, _modelLayer))
                     decal.PlaceOnSurface(hit.point, hit.normal);
                 else
-                    decal.PlaceOnSurface(zoneWorldPoint, _projectionZone.transform.forward);
+                    decal.PlaceOnSurface(zoneWorldPoint, surfaceNormal);
 
                 float zoneH = Mathf.Max(_projectionZone.ZoneHeight, 0.001f);
                 float zoneW = zoneH * Mathf.Max(_projectionZone.CanvasAspect, 0.001f);
@@ -165,8 +166,130 @@ public class DecalTransformService
         float x = (uv.x - 0.5f) * zoneWidth;
         float y = (uv.y - 0.5f) * zoneHeight;
 
-        var local = new Vector3(x, y, 0f) + _projectionZone.Offset;
-        return _projectionZone.transform.TransformPoint(local);
+        GetProjectionSurfaceBasis(out Vector3 surfaceCenter, out Vector3 surfaceRight, out Vector3 surfaceUp, out _);
+        return surfaceCenter + surfaceRight * x + surfaceUp * y;
+    }
+
+    private void GetProjectionSurfaceBasis(out Vector3 center, out Vector3 right, out Vector3 up, out Vector3 normal)
+    {
+        center = GetProjectionSurfaceCenterWorld();
+        right = Vector3.right;
+        up = Vector3.up;
+        normal = Vector3.forward;
+
+        if (_projectionZone == null)
+            return;
+
+        if (_projectionZone.UseZoneTransformAxes)
+        {
+            Transform zoneTransform = _projectionZone.transform;
+            right = zoneTransform.right;
+            up = zoneTransform.up;
+            normal = zoneTransform.forward;
+            return;
+        }
+
+        var renderer = GetProjectionSurfaceRenderer();
+        if (renderer == null)
+        {
+            Transform zoneTransform = _projectionZone.transform;
+            right = zoneTransform.right;
+            up = zoneTransform.up;
+            normal = zoneTransform.forward;
+            return;
+        }
+
+        Transform rendererTransform = renderer.transform;
+        if (!TryGetFlatSurfaceAxes(renderer, out right, out up, out normal))
+        {
+            right = rendererTransform.right;
+            up = rendererTransform.up;
+            normal = rendererTransform.forward;
+        }
+    }
+
+    private Vector3 GetProjectionSurfaceCenterWorld()
+    {
+        if (_projectionZone == null)
+            return Vector3.zero;
+
+        var renderer = GetProjectionSurfaceRenderer();
+        if (renderer == null)
+            return _projectionZone.transform.TransformPoint(_projectionZone.Offset);
+
+        return renderer.bounds.center + _projectionZone.transform.TransformVector(_projectionZone.Offset);
+    }
+
+    private Renderer GetProjectionSurfaceRenderer()
+    {
+        if (_projectionZone == null)
+            return null;
+
+        return _projectionZone.GetComponent<Renderer>() ?? _projectionZone.GetComponentInChildren<Renderer>(true);
+    }
+
+    private bool TryGetFlatSurfaceAxes(Renderer renderer, out Vector3 right, out Vector3 up, out Vector3 normal)
+    {
+        right = Vector3.right;
+        up = Vector3.up;
+        normal = Vector3.forward;
+
+        if (renderer == null)
+            return false;
+
+        var meshFilter = renderer.GetComponent<MeshFilter>();
+        if (meshFilter == null || meshFilter.sharedMesh == null)
+            return false;
+
+        Transform t = renderer.transform;
+        Vector3 scaledSize = Vector3.Scale(meshFilter.sharedMesh.bounds.size, AbsVector(t.lossyScale));
+
+        int normalAxis = GetSmallestAxis(scaledSize);
+        int firstAxis = (normalAxis + 1) % 3;
+        int secondAxis = (normalAxis + 2) % 3;
+
+        Vector3 firstDir = GetTransformAxis(t, firstAxis);
+        Vector3 secondDir = GetTransformAxis(t, secondAxis);
+        Vector3 referenceUp = _projectionZone != null ? _projectionZone.transform.up : Vector3.up;
+
+        int upAxis = Mathf.Abs(Vector3.Dot(firstDir.normalized, referenceUp.normalized)) >= Mathf.Abs(Vector3.Dot(secondDir.normalized, referenceUp.normalized))
+            ? firstAxis
+            : secondAxis;
+        int rightAxis = upAxis == firstAxis ? secondAxis : firstAxis;
+
+        right = GetTransformAxis(t, rightAxis).normalized;
+        up = GetTransformAxis(t, upAxis).normalized;
+        if (Vector3.Dot(up, referenceUp) < 0f)
+            up = -up;
+
+        Vector3 axisNormal = GetTransformAxis(t, normalAxis).normalized;
+        normal = Vector3.Cross(right, up).normalized;
+        if (Vector3.Dot(normal, axisNormal) < 0f)
+        {
+            right = -right;
+            normal = -normal;
+        }
+
+        return true;
+    }
+
+    private static Vector3 GetTransformAxis(Transform transform, int axis)
+    {
+        if (axis == 0) return transform.right;
+        if (axis == 1) return transform.up;
+        return transform.forward;
+    }
+
+    private static int GetSmallestAxis(Vector3 value)
+    {
+        if (value.x <= value.y && value.x <= value.z) return 0;
+        if (value.y <= value.x && value.y <= value.z) return 1;
+        return 2;
+    }
+
+    private static Vector3 AbsVector(Vector3 value)
+    {
+        return new Vector3(Mathf.Abs(value.x), Mathf.Abs(value.y), Mathf.Abs(value.z));
     }
 
     private Vector2 GetLayerCenterViewportPoint(RectTransform layerRect, Canvas canvas)
