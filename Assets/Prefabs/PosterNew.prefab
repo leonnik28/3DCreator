@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2540827344813152934}
   - component: {fileID: 1910496916651361335}
   - component: {fileID: 3324857568188739123}
+  - component: {fileID: 8415062850356259165}
   m_Layer: 0
   m_Name: PosterNew
   m_TagString: Untagged
@@ -52,9 +53,10 @@ MonoBehaviour:
   _previewController: {fileID: 0}
   _decalManager: {fileID: 0}
   _baseColor: {r: 1, g: 1, b: 1, a: 1}
-  _vScale: 1
+  _vScale: 0.93
   _planeFrontSign: 1
   _rectCurvature: 0
+  _flipNormal: 0
   _noPrintCenterU: 0
   _noPrintHalfU: 0
   _noPrintAtCanvasEdges: 1
@@ -75,6 +77,21 @@ MonoBehaviour:
     DisplayName: Outline
     TargetRenderer: {fileID: 5337365046535243511}
     MaterialIndex: 0
+--- !u!114 &8415062850356259165
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1153353879258706965}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3e48201aad6f4469738045fecb6cfa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _zoneHeight: 1
+  _offset: {x: 0, y: 0, z: 0}
+  _canvasAspect: 1
 --- !u!1 &5841974980945798946
 GameObject:
   m_ObjectHideFlags: 0

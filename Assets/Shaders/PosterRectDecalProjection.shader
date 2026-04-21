@@ -6,6 +6,10 @@ Shader "Universal Render Pipeline/PosterRectDecalProjection"
         _DecalTex ("Decal Texture", 2D) = "white" {}
         _DecalRect ("Decal Rect (centerU, centerV, halfW, halfH)", Vector) = (0.5, 0.5, 0.25, 0.25)
         _DecalRotation ("Decal Rotation (degrees)", Float) = 0
+        _MirrorU ("Mirror U (0/1)", Float) = 0
+        _MirrorV ("Mirror V (0/1)", Float) = 0
+        _StretchU ("Stretch U (multiplier)", Float) = 1
+        _StretchV ("Stretch V (multiplier)", Float) = 1
 
         [Header(Rect Surface OS)]
         _PlaneAxisU ("U Axis: 0=X, 1=Y, 2=Z", Float) = 0
@@ -15,7 +19,7 @@ Shader "Universal Render Pipeline/PosterRectDecalProjection"
         _PlaneHalfV ("Plane Half Size V", Float) = 0.5
         _PlaneCenterOS ("Plane Center (object-space)", Vector) = (0,0,0,0)
         _PlaneOffset ("Plane Offset Along Normal", Float) = 0
-        _FrontOnly ("Front Only (0/1)", Float) = 1
+        _FrontOnly ("Front Only (0/1)", Float) = 0
         _Curvature ("Curvature Amount", Range(0,1)) = 0
 
         [Header(Appearance)]
@@ -26,7 +30,7 @@ Shader "Universal Render Pipeline/PosterRectDecalProjection"
     SubShader
     {
         Tags { "RenderType"="Opaque" "Queue"="Geometry" "RenderPipeline"="UniversalRenderPipeline" }
-        Cull Back
+        Cull Off
         ZWrite On
         ZTest LEqual
 
@@ -45,6 +49,10 @@ Shader "Universal Render Pipeline/PosterRectDecalProjection"
 
             float4 _DecalRect;
             float _DecalRotation;
+            float _MirrorU;
+            float _MirrorV;
+            float _StretchU;
+            float _StretchV;
             float _PlaneAxisU;
             float _PlaneAxisV;
             float _PlaneAxisN;
@@ -70,13 +78,6 @@ Shader "Universal Render Pipeline/PosterRectDecalProjection"
                 float3 normalOS    : TEXCOORD1;
             };
 
-            float AxisValue(float3 v, float axis)
-            {
-                if (axis < 0.5) return v.x;
-                if (axis < 1.5) return v.y;
-                return v.z;
-            }
-
             float3 AxisVector(float axis)
             {
                 if (axis < 0.5) return float3(1, 0, 0);
@@ -97,52 +98,75 @@ Shader "Universal Render Pipeline/PosterRectDecalProjection"
             {
                 float3 pos = IN.positionOS;
                 float3 normalOS = normalize(IN.normalOS);
-                float3 center = _PlaneCenterOS.xyz;
-
-                float uLocal = AxisValue(pos, _PlaneAxisU) - AxisValue(center, _PlaneAxisU);
-                float vLocal = AxisValue(pos, _PlaneAxisV) - AxisValue(center, _PlaneAxisV);
-                float nLocal = AxisValue(pos, _PlaneAxisN);
-
-                float uNorm = uLocal / max(_PlaneHalfU, 0.001);
-                float vNorm = vLocal / max(_PlaneHalfV, 0.001);
-
-                float2 canvasUV = float2(uNorm * 0.5 + 0.5, vNorm * 0.5 + 0.5);
-                if (canvasUV.x < 0.0 || canvasUV.x > 1.0 || canvasUV.y < 0.0 || canvasUV.y > 1.0)
-                    return _BaseColor;
-
-                float3 nAxis = AxisVector(_PlaneAxisN);
+                
+                // Получаем оси
                 float3 uAxis = AxisVector(_PlaneAxisU);
                 float3 vAxis = AxisVector(_PlaneAxisV);
-                float3 curvedOut = normalize(nAxis + _Curvature * (uNorm * uAxis + vNorm * vAxis * 0.35));
-
-                if (_FrontOnly > 0.5 && dot(normalOS, curvedOut) <= 0.0)
-                    return _BaseColor;
-
-                float depthAllowance = max(_Curvature * 0.05, 0.01);
-                if (abs(nLocal - _PlaneOffset) > depthAllowance)
-                    return _BaseColor;
-
+                float3 nAxis = AxisVector(_PlaneAxisN);
+                
+                // Позиция относительно центра плоскости
+                float3 localPos = pos - _PlaneCenterOS.xyz;
+                
+                // Координаты на плоскости
+                float uCoord = dot(localPos, uAxis);
+                float vCoord = dot(localPos, vAxis);
+                float nCoord = dot(localPos, nAxis) - _PlaneOffset;
+                
+                // Применяем растяжение к границам плоскости
+                float stretchedHalfU = _PlaneHalfU / max(_StretchU, 0.01);
+                float stretchedHalfV = _PlaneHalfV / max(_StretchV, 0.01);
+                
+                // Проверка попадания в объем плоскости с учетом растяжения
+                if (abs(uCoord) > stretchedHalfU) return _BaseColor;
+                if (abs(vCoord) > stretchedHalfV) return _BaseColor;
+                if (abs(nCoord) > 0.1) return _BaseColor;
+                
+                // Проверка фронтальности
+                if (_FrontOnly > 0.5)
+                {
+                    float facing = dot(normalOS, nAxis);
+                    if (facing < 0.1) return _BaseColor;
+                }
+                
+                // UV координаты на плоскости (0-1) с учетом растяжения
+                float2 planeUV = float2(
+                    (uCoord / stretchedHalfU) * 0.5 + 0.5,
+                    (vCoord / stretchedHalfV) * 0.5 + 0.5
+                );
+                
+                // Координаты декали
                 float2 decalCenter = _DecalRect.xy;
                 float2 decalHalf = _DecalRect.zw;
-
-                float rad = _DecalRotation * 0.017453293;
+                
+                // Поворот
+                float rad = _DecalRotation * 0.0174532925;
                 float c = cos(rad);
                 float s = sin(rad);
-                float2 toPoint = canvasUV - decalCenter;
-                float2 local = float2(toPoint.x * c + toPoint.y * s, -toPoint.x * s + toPoint.y * c);
-
-                if (abs(local.x) > decalHalf.x || abs(local.y) > decalHalf.y)
-                    return _BaseColor;
-
-                float2 decalUV = float2(
-                    (local.x + decalHalf.x) / (2.0 * max(decalHalf.x, 0.001)),
-                    (local.y + decalHalf.y) / (2.0 * max(decalHalf.y, 0.001))
+                float2 toCenter = planeUV - decalCenter;
+                float2 rotatedUV = float2(
+                    toCenter.x * c + toCenter.y * s,
+                    -toCenter.x * s + toCenter.y * c
                 );
-
-                float4 decalCol = SAMPLE_TEXTURE2D(_DecalTex, sampler_DecalTex, decalUV);
+                
+                // Отзеркаливание
+                if (_MirrorU > 0.5) rotatedUV.x = -rotatedUV.x;
+                if (_MirrorV > 0.5) rotatedUV.y = -rotatedUV.y;
+                
+                // Проверка попадания в декаль
+                if (abs(rotatedUV.x) > decalHalf.x) return _BaseColor;
+                if (abs(rotatedUV.y) > decalHalf.y) return _BaseColor;
+                
+                // Финальные UV текстуры
+                float2 finalUV = float2(
+                    (rotatedUV.x + decalHalf.x) / (2.0 * max(decalHalf.x, 0.001)),
+                    (rotatedUV.y + decalHalf.y) / (2.0 * max(decalHalf.y, 0.001))
+                );
+                
+                float4 decalCol = SAMPLE_TEXTURE2D(_DecalTex, sampler_DecalTex, finalUV);
                 float4 col = decalCol * _BaseColor;
-                if (col.a <= _AlphaClip)
-                    discard;
+                
+                if (col.a <= _AlphaClip) discard;
+                
                 return col;
             }
             ENDHLSL

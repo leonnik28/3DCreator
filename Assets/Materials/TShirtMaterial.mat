@@ -95,6 +95,8 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _EnvironmentReflections: 1
+    - _FlipU: 0
+    - _FlipV: 0
     - _FrontOnly: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -103,10 +105,10 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _PlaneAxisN: 2
-    - _PlaneAxisU: 0
-    - _PlaneAxisV: 1
-    - _PlaneHalfU: 0.5
-    - _PlaneHalfV: 0.5
+    - _PlaneAxisU: 2
+    - _PlaneAxisV: 0
+    - _PlaneHalfU: 0.1
+    - _PlaneHalfV: 0.55
     - _PlaneOffset: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1

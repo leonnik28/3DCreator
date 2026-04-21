@@ -25,3 +25,6 @@ MonoBehaviour:
   - DisplayName: "\u0424\u0443\u0442\u0431\u043E\u043B\u043A\u0430"
     Prefab: {fileID: 3159746871703878492, guid: 0cfc5ee56c5009247a9abd46e65a4ace, type: 3}
     Thumbnail: {fileID: 21300000, guid: d8781abacd35da0418c7bc7644d51c03, type: 3}
+  - DisplayName: "\u0428\u043E\u043F\u043F\u0435\u0440"
+    Prefab: {fileID: 8477373832005851553, guid: f685f4cce3e244147beb8a9816b08bfc, type: 3}
+    Thumbnail: {fileID: 21300000, guid: aee454fcb90274c42b8096a03bf7a1ef, type: 3}

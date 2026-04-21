@@ -5,8 +5,8 @@ Shader "Universal Render Pipeline/ShopperRectDecalProjection"
         _DecalTex ("Decal Texture", 2D) = "white" {}
         _DecalRect ("Decal Rect (centerU, centerV, halfW, halfH)", Vector) = (0.5, 0.5, 0.25, 0.25)
         _DecalRotation ("Decal Rotation (degrees)", Float) = 0
-        _PlaneAxisU ("U Axis: 0=X, 1=Y, 2=Z", Float) = 0
-        _PlaneAxisV ("V Axis: 0=X, 1=Y, 2=Z", Float) = 1
+        _PlaneAxisU ("U Axis: 0=X, 1=Y, 2=Z", Float) = 1
+        _PlaneAxisV ("V Axis: 0=X, 1=Y, 2=Z", Float) = 2
         _PlaneAxisN ("Normal Axis: 0=X, 1=Y, 2=Z", Float) = 2
         _PlaneHalfU ("Plane Half Size U", Float) = 0.5
         _PlaneHalfV ("Plane Half Size V", Float) = 0.5
