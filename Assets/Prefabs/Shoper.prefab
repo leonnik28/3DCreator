@@ -136,10 +136,11 @@ MonoBehaviour:
   _projectionKind: 4
   _previewController: {fileID: 0}
   _decalManager: {fileID: 0}
+  _projectionZone: {fileID: 0}
   _baseColor: {r: 1, g: 1, b: 1, a: 1}
   _vScale: 1
   _planeFrontSign: 1
-  _rectCurvature: 0
+  _rectCurvature: 0.4
   _noPrintCenterU: 0
   _noPrintHalfU: 0
   _noPrintAtCanvasEdges: 1
@@ -168,6 +169,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e3e48201aad6f4469738045fecb6cfa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _zoneHeight: 1
-  _offset: {x: 0, y: 90, z: 0}
-  _canvasAspect: 1
+  _zoneHeight: 0.72
+  _offset: {x: 0, y: 0.1, z: 0}
+  _canvasAspect: 0.78

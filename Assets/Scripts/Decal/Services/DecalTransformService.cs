@@ -34,14 +34,27 @@ public class DecalTransformService
 
         if (_projectionZone != null && previewRect != null)
         {
-            if (TryGetLayerNormalizedPositionInPreview(layerRect, previewRect, canvas, out var uv))
+            if (TryGetClippedRectInPreview(layerRect, previewRect, canvas, out var clippedCenter, out var clippedSize))
             {
-                var zoneWorldPoint = GetZoneWorldPoint(uv);
+                var zoneWorldPoint = GetZoneWorldPoint(clippedCenter);
                 var ray = new Ray(zoneWorldPoint + _projectionZone.transform.forward * 0.5f, -_projectionZone.transform.forward);
                 if (Physics.Raycast(ray, out var hit, 5f, _modelLayer))
                     decal.PlaceOnSurface(hit.point, hit.normal);
                 else
                     decal.PlaceOnSurface(zoneWorldPoint, _projectionZone.transform.forward);
+
+                float zoneH = Mathf.Max(_projectionZone.ZoneHeight, 0.001f);
+                float zoneW = zoneH * Mathf.Max(_projectionZone.CanvasAspect, 0.001f);
+                float worldH = Mathf.Max(zoneH * clippedSize.y, 0.001f);
+                float worldW = Mathf.Max(zoneW * clippedSize.x, 0.001f);
+
+                decal.SetSize(worldH * 0.5f);
+                decal.SetAspectRatio(worldW / worldH);
+            }
+            else
+            {
+                decal.SetSize(0.0005f);
+                decal.SetAspectRatio(1f);
             }
         }
         else
@@ -50,32 +63,7 @@ public class DecalTransformService
             var ray = _camera.ViewportPointToRay(viewportPoint);
             if (Physics.Raycast(ray, out var hit, 100f, _modelLayer))
                 decal.PlaceOnSurface(hit.point, hit.normal);
-        }
 
-        if (_projectionZone != null && previewRect != null)
-        {
-            // 1:1 маппинг размеров слоя из 2D окна в размеры зоны на модели
-            float previewW = Mathf.Max(previewRect.rect.width, 0.001f);
-            float previewH = Mathf.Max(previewRect.rect.height, 0.001f);
-
-            float layerW = Mathf.Abs(layerRect.rect.width);
-            float layerH = Mathf.Abs(layerRect.rect.height);
-
-            float normW = Mathf.Clamp01(layerW / previewW);
-            float normH = Mathf.Clamp01(layerH / previewH);
-
-            float zoneH = Mathf.Max(_projectionZone.ZoneHeight, 0.001f);
-            float zoneW = zoneH * Mathf.Max(_projectionZone.CanvasAspect, 0.001f);
-
-            float worldH = Mathf.Max(zoneH * normH, 0.001f);
-            float worldW = Mathf.Max(zoneW * normW, 0.001f);
-
-            decal.SetSize(worldH * 0.5f);
-            decal.SetAspectRatio(worldW / worldH);
-        }
-        else
-        {
-            // Fallback: старая схема через масштаб UI->world
             Vector2 uiSize = layerRect.sizeDelta;
             float prevH = (previewRect != null && previewRect.rect.height > 1f) ? previewRect.rect.height : 200f;
             float layerRatio = Mathf.Clamp01(Mathf.Abs(uiSize.y) / prevH);
@@ -87,33 +75,6 @@ public class DecalTransformService
             var euler = decal.transform.eulerAngles;
             decal.transform.eulerAngles = new Vector3(euler.x, euler.y, rotation);
         }
-    }
-
-    private bool TryGetLayerNormalizedPositionInPreview(RectTransform layerRect, RectTransform previewRect, Canvas canvas, out Vector2 uv)
-    {
-        uv = new Vector2(0.5f, 0.5f);
-        if (layerRect == null || previewRect == null) return false;
-
-        Vector3[] corners = new Vector3[4];
-        layerRect.GetWorldCorners(corners);
-        Vector3 center = (corners[0] + corners[1] + corners[2] + corners[3]) * 0.25f;
-
-        Camera cam = null;
-        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
-            cam = canvas.worldCamera ?? _camera;
-
-        var screenPoint = RectTransformUtility.WorldToScreenPoint(cam, center);
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(previewRect, screenPoint, cam, out var local))
-            return false;
-
-        var rect = previewRect.rect;
-        if (rect.width <= 0.0001f || rect.height <= 0.0001f)
-            return false;
-
-        float u = Mathf.InverseLerp(rect.xMin, rect.xMax, local.x);
-        float v = Mathf.InverseLerp(rect.yMin, rect.yMax, local.y);
-        uv = new Vector2(u, v);
-        return true;
     }
 
     /// <summary>
@@ -137,48 +98,63 @@ public class DecalTransformService
         if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
             cam = canvas.worldCamera ?? _camera;
 
-        // Получаем мировые углы слоя и переводим в локальные координаты превью.
-        Vector3[] corners = new Vector3[4];
-        layerRect.GetWorldCorners(corners);
+        var layerBounds = GetBoundsInPreviewSpace(layerRect, previewRect);
+        var previewBounds = previewRect.rect;
 
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                previewRect,
-                RectTransformUtility.WorldToScreenPoint(cam, corners[0]),
-                cam,
-                out var bl)) // bottom-left
-            return false;
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                previewRect,
-                RectTransformUtility.WorldToScreenPoint(cam, corners[2]),
-                cam,
-                out var tr)) // top-right
+        if (previewBounds.width <= 0.0001f || previewBounds.height <= 0.0001f)
             return false;
 
-        var rect = previewRect.rect;
-        if (rect.width <= 0.0001f || rect.height <= 0.0001f)
-            return false;
-
-        float xMin = Mathf.Max(bl.x, rect.xMin);
-        float xMax = Mathf.Min(tr.x, rect.xMax);
-        float yMin = Mathf.Max(bl.y, rect.yMin);
-        float yMax = Mathf.Min(tr.y, rect.yMax);
+        float xMin = Mathf.Max(layerBounds.xMin, previewBounds.xMin);
+        float xMax = Mathf.Min(layerBounds.xMax, previewBounds.xMax);
+        float yMin = Mathf.Max(layerBounds.yMin, previewBounds.yMin);
+        float yMax = Mathf.Min(layerBounds.yMax, previewBounds.yMax);
 
         if (xMax <= xMin || yMax <= yMin)
-            return false; // слой полностью вне окна
+            return false;
 
         float cx = (xMin + xMax) * 0.5f;
         float cy = (yMin + yMax) * 0.5f;
-
         float w = xMax - xMin;
         float h = yMax - yMin;
 
-        // Нормализация в 0..1 относительно окна превью.
-        float uCenter = Mathf.InverseLerp(rect.xMin, rect.xMax, cx);
-        float vCenter = Mathf.InverseLerp(rect.yMin, rect.yMax, cy);
-
-        center = new Vector2(uCenter, vCenter);
-        size = new Vector2(w / rect.width, h / rect.height);
+        center = new Vector2(
+            Mathf.InverseLerp(previewBounds.xMin, previewBounds.xMax, cx),
+            Mathf.InverseLerp(previewBounds.yMin, previewBounds.yMax, cy)
+        );
+        size = new Vector2(
+            Mathf.Clamp01(w / previewBounds.width),
+            Mathf.Clamp01(h / previewBounds.height)
+        );
         return true;
+    }
+
+    private Rect GetBoundsInPreviewSpace(RectTransform layerRect, RectTransform previewRect)
+    {
+        var layerLocalRect = layerRect.rect;
+        Vector3[] localCorners = new Vector3[4]
+        {
+            new Vector3(layerLocalRect.xMin, layerLocalRect.yMin, 0f),
+            new Vector3(layerLocalRect.xMax, layerLocalRect.yMin, 0f),
+            new Vector3(layerLocalRect.xMax, layerLocalRect.yMax, 0f),
+            new Vector3(layerLocalRect.xMin, layerLocalRect.yMax, 0f)
+        };
+
+        float xMin = float.MaxValue;
+        float xMax = float.MinValue;
+        float yMin = float.MaxValue;
+        float yMax = float.MinValue;
+
+        for (int i = 0; i < localCorners.Length; i++)
+        {
+            Vector3 world = layerRect.TransformPoint(localCorners[i]);
+            Vector3 localInPreview = previewRect.InverseTransformPoint(world);
+            xMin = Mathf.Min(xMin, localInPreview.x);
+            xMax = Mathf.Max(xMax, localInPreview.x);
+            yMin = Mathf.Min(yMin, localInPreview.y);
+            yMax = Mathf.Max(yMax, localInPreview.y);
+        }
+
+        return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
     }
 
     private Vector3 GetZoneWorldPoint(Vector2 uv)
@@ -189,7 +165,6 @@ public class DecalTransformService
         float x = (uv.x - 0.5f) * zoneWidth;
         float y = (uv.y - 0.5f) * zoneHeight;
 
-        // В локальных координатах зоны: X - ширина, Y - высота, Z = 0 плоскость зоны
         var local = new Vector3(x, y, 0f) + _projectionZone.Offset;
         return _projectionZone.transform.TransformPoint(local);
     }

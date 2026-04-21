@@ -38,6 +38,7 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
     private IDecalLayerVisualStrategy _visualStrategy;
     private ILayerOrderStrategy _orderStrategy;
     private ISelectionStrategy _selectionStrategy;
+    private RectTransform _workingAreaRect;
 
     private Dictionary<DecalController, IDecalLayer> _decalLayers =
         new Dictionary<DecalController, IDecalLayer>();
@@ -80,8 +81,7 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
 
     private void ValidateReferences()
     {
-        if (_layersContainer == null)
-            _layersContainer = EnsureDefaultLayersContainer();
+        _workingAreaRect = EnsureDefaultLayersContainer() as RectTransform;
 
         if (_uiDecalLayerPrefab == null)
             Debug.LogError("UIDecalLayer prefab is not assigned!");
@@ -157,7 +157,7 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
     {
         _layerFactory = new DecalLayerFactory(
             _uiDecalLayerPrefab,
-            _layersContainer,
+            _workingAreaRect != null ? _workingAreaRect : GetWorkingAreaRect(),
             _visualStrategy,
             _visualParameters
         );
@@ -181,6 +181,18 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
             maskImage.color = new Color(1, 1, 1, 0.1f);
             maskImage.raycastTarget = false;
         }
+
+        SetupWorkingAreaMask();
+    }
+
+    private void SetupWorkingAreaMask()
+    {
+        var workingArea = GetWorkingAreaRect();
+        if (workingArea == null)
+            return;
+
+        if (workingArea.GetComponent<RectMask2D>() == null)
+            workingArea.gameObject.AddComponent<RectMask2D>();
     }
 
     private void SetInitialState()
@@ -287,6 +299,17 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
         workingArea.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeight);
         workingArea.anchoredPosition = Vector2.zero;
         workingArea.localScale = Vector3.one;
+
+        if (_layersContainer is RectTransform assignedContainer && assignedContainer != workingArea)
+        {
+            assignedContainer.anchorMin = workingArea.anchorMin;
+            assignedContainer.anchorMax = workingArea.anchorMax;
+            assignedContainer.pivot = workingArea.pivot;
+            assignedContainer.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
+            assignedContainer.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeight);
+            assignedContainer.anchoredPosition = Vector2.zero;
+            assignedContainer.localScale = Vector3.one;
+        }
     }
 
     #endregion
@@ -335,6 +358,12 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
         {
             layer.UpdateTransform(decal.transform.position, decal.transform.eulerAngles.z);
         }
+    }
+
+    public void UpdateLayerMirror(DecalController decal)
+    {
+        if (decal != null && _decalLayers.TryGetValue(decal, out var layer))
+            layer.SetMirrored(decal.IsMirroredX());
     }
 
     public void UpdateAllLayers()
@@ -405,7 +434,7 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
 
     private RectTransform GetWorkingAreaRect()
     {
-        return _layersContainer as RectTransform ?? _previewWindow;
+        return _workingAreaRect != null ? _workingAreaRect : _previewWindow;
     }
 
     #endregion

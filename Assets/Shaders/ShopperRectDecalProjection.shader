@@ -5,9 +5,10 @@ Shader "Universal Render Pipeline/ShopperRectDecalProjection"
         _DecalTex ("Decal Texture", 2D) = "white" {}
         _DecalRect ("Decal Rect (centerU, centerV, halfW, halfH)", Vector) = (0.5, 0.5, 0.25, 0.25)
         _DecalRotation ("Decal Rotation (degrees)", Float) = 0
-        _PlaneAxisU ("U Axis: 0=X, 1=Y, 2=Z", Float) = 1
-        _PlaneAxisV ("V Axis: 0=X, 1=Y, 2=Z", Float) = 2
-        _PlaneAxisN ("Normal Axis: 0=X, 1=Y, 2=Z", Float) = 2
+        _DecalMirrorX ("Decal Mirror X", Float) = 0
+        _PlaneAxisU ("U Axis: 0=X, 1=Y, 2=Z", Float) = 2
+        _PlaneAxisV ("V Axis: 0=X, 1=Y, 2=Z", Float) = 1
+        _PlaneAxisN ("Normal Axis: 0=X, 1=Y, 2=Z", Float) = 0
         _PlaneHalfU ("Plane Half Size U", Float) = 0.5
         _PlaneHalfV ("Plane Half Size V", Float) = 0.5
         _PlaneCenterOS ("Plane Center (object-space)", Vector) = (0,0,0,0)
@@ -30,7 +31,7 @@ Shader "Universal Render Pipeline/ShopperRectDecalProjection"
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             TEXTURE2D(_DecalTex); SAMPLER(sampler_DecalTex);
-            float4 _DecalRect; float _DecalRotation; float _PlaneAxisU; float _PlaneAxisV; float _PlaneAxisN;
+            float4 _DecalRect; float _DecalRotation; float _DecalMirrorX; float _PlaneAxisU; float _PlaneAxisV; float _PlaneAxisN;
             float _PlaneHalfU; float _PlaneHalfV; float4 _PlaneCenterOS; float _PlaneOffset; float _FrontOnly;
             float _Curvature; float4 _BaseColor; float _AlphaClip;
             struct Attributes { float4 positionOS:POSITION; float3 normalOS:NORMAL; };
@@ -51,6 +52,7 @@ Shader "Universal Render Pipeline/ShopperRectDecalProjection"
                 float2 decalCenter=_DecalRect.xy; float2 decalHalf=_DecalRect.zw;
                 float rad=_DecalRotation*0.017453293; float c=cos(rad); float s=sin(rad); float2 toPoint=canvasUV-decalCenter;
                 float2 local=float2(toPoint.x*c+toPoint.y*s,-toPoint.x*s+toPoint.y*c);
+                if(_DecalMirrorX>0.5) local.x=-local.x;
                 if(abs(local.x)>decalHalf.x||abs(local.y)>decalHalf.y) return _BaseColor;
                 float2 decalUV=float2((local.x+decalHalf.x)/(2.0*max(decalHalf.x,0.001)),(local.y+decalHalf.y)/(2.0*max(decalHalf.y,0.001)));
                 float4 decalCol=SAMPLE_TEXTURE2D(_DecalTex,sampler_DecalTex,decalUV); float4 col=decalCol*_BaseColor; if(col.a<=_AlphaClip) discard; return col;

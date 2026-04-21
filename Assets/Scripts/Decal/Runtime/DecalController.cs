@@ -13,6 +13,7 @@ public class DecalController : MonoBehaviour
     private Material _baseMaterial;
     private float _aspectRatio = 1f;
     private float _worldHalfHeight;
+    private bool _isMirroredX;
 
     public float CreationTime { get; set; }
 
@@ -46,8 +47,19 @@ public class DecalController : MonoBehaviour
         _aspectRatio = Mathf.Max(aspect, 0.01f);
     }
 
+    public void ToggleHorizontalMirror()
+    {
+        _isMirroredX = !_isMirroredX;
+    }
+
+    public void SetMirroredX(bool mirrored)
+    {
+        _isMirroredX = mirrored;
+    }
+
     public Texture2D GetTexture() => _texture;
     public float GetAspectRatio() => _aspectRatio;
+    public bool IsMirroredX() => _isMirroredX;
 
     private void OnDestroy()
     {
@@ -57,4 +69,3 @@ public class DecalController : MonoBehaviour
         OnDeleted?.Invoke(this);
     }
 }
-

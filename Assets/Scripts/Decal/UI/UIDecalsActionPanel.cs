@@ -11,6 +11,7 @@ public class UIDecalsActionPanel : UIPanelBase
     [Header("Buttons")]
     [SerializeField] private Button _clearAllButton;
     [SerializeField] private Button _deleteSelectedButton;
+    [SerializeField] private Button _mirrorSelectedButton;
     [SerializeField] private Button _snapshotButton;
     [SerializeField] private Button _generateDescriptionButton;
 
@@ -20,6 +21,7 @@ public class UIDecalsActionPanel : UIPanelBase
 
     public event Action OnClearAllClicked;
     public event Action OnDeleteSelectedClicked;
+    public event Action OnMirrorSelectedClicked;
     public event Action OnSnapshotClicked;
     public event Action OnGenerateDescriptionClicked;
 
@@ -43,6 +45,9 @@ public class UIDecalsActionPanel : UIPanelBase
         if (_deleteSelectedButton == null)
             Debug.LogWarning("Delete Selected button is not assigned!");
 
+        if (_mirrorSelectedButton == null)
+            Debug.LogWarning("Mirror Selected button is not assigned!");
+
         if (_snapshotButton == null)
             Debug.LogWarning("Snapshot button is not assigned!");
 
@@ -57,6 +62,9 @@ public class UIDecalsActionPanel : UIPanelBase
 
         if (_deleteSelectedButton != null)
             _deleteSelectedButton.onClick.AddListener(() => OnDeleteSelectedClicked?.Invoke());
+
+        if (_mirrorSelectedButton != null)
+            _mirrorSelectedButton.onClick.AddListener(() => OnMirrorSelectedClicked?.Invoke());
 
         if (_snapshotButton != null)
             _snapshotButton.onClick.AddListener(() => OnSnapshotClicked?.Invoke());

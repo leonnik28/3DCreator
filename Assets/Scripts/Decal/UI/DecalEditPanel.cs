@@ -89,6 +89,7 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
         if (_actionPanel != null)
         {
             _actionPanel.OnDeleteSelectedClicked += OnDeleteSelectedClicked;
+            _actionPanel.OnMirrorSelectedClicked += OnMirrorSelectedClicked;
             _actionPanel.OnClearAllClicked += OnClearAllClicked;
             _actionPanel.OnSnapshotClicked += OnSnapshotClicked;
             _actionPanel.OnGenerateDescriptionClicked += OnGenerateDescriptionClicked;
@@ -116,6 +117,16 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
     private void OnClearAllClicked()
     {
         _decalManager?.ClearAllDecals();
+    }
+
+    private void OnMirrorSelectedClicked()
+    {
+        if (_activeDecal == null)
+            return;
+
+        _activeDecal.ToggleHorizontalMirror();
+        _previewController?.UpdateLayerMirror(_activeDecal);
+        _decalManager?.NotifyDecalVisualChanged(_activeDecal);
     }
 
     private void OnSnapshotClicked()
@@ -254,6 +265,7 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
         if (_actionPanel != null)
         {
             _actionPanel.OnDeleteSelectedClicked -= OnDeleteSelectedClicked;
+            _actionPanel.OnMirrorSelectedClicked -= OnMirrorSelectedClicked;
             _actionPanel.OnClearAllClicked -= OnClearAllClicked;
             _actionPanel.OnSnapshotClicked -= OnSnapshotClicked;
             _actionPanel.OnGenerateDescriptionClicked -= OnGenerateDescriptionClicked;

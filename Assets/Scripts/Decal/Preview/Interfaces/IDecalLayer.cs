@@ -14,6 +14,7 @@ namespace PreviewSystem.Interfaces
         void UpdateTransform(Vector2 position, float rotation);
         void UpdateWindowSize();
         void SetSelected(bool selected);
+        void SetMirrored(bool mirrored);
         void SetVisualParameters(ILayerVisualParameters parameters);
         void SetOnMoved(System.Action callback);
 

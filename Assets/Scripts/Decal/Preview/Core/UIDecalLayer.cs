@@ -63,6 +63,7 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerCli
 
         SetupTexture(decal.GetTexture());
         FitToWindow();
+        SetMirrored(decal.IsMirroredX());
     }
 
     public void SetOnMoved(System.Action callback) => _onMoved = callback;
@@ -132,7 +133,6 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerCli
     public void UpdateWindowSize()
     {
         FitToWindow();
-        DecalLayerDragHandler.EnsureLayerFitsInsideParent(_layerRect, _parentRect);
     }
 
     public void SetSelected(bool selected)
@@ -145,6 +145,16 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerCli
         // �������������� ����������
         _layerImage.enabled = false;
         _layerImage.enabled = true;
+    }
+
+    public void SetMirrored(bool mirrored)
+    {
+        if (_layerImage == null)
+            return;
+
+        _layerImage.uvRect = mirrored
+            ? new Rect(1f, 0f, -1f, 1f)
+            : new Rect(0f, 0f, 1f, 1f);
     }
 
     public void OnPointerClick(PointerEventData eventData)

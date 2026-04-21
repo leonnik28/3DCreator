@@ -123,6 +123,14 @@ public class DecalManager : MonoBehaviour
         OnDecalTransformChanged?.Invoke(_selectedDecal);
     }
 
+    public void NotifyDecalVisualChanged(DecalController decal)
+    {
+        if (decal == null)
+            return;
+
+        OnDecalTransformChanged?.Invoke(decal);
+    }
+
     private void ResolveProjectionZoneFromTargetModel()
     {
         _projectionZone = _targetModel != null

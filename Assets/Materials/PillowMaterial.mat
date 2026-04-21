@@ -115,6 +115,12 @@ Material:
     - _Metallic: 0
     - _MirrorU: 1
     - _MirrorV: 0
+    - _NoPrintAtEdges: 1
+    - _NoPrintAtEdgesV: 1
+    - _NoPrintCenterU: 0
+    - _NoPrintCenterV: 0.5
+    - _NoPrintHalfU: 0
+    - _NoPrintHalfV: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _PlaneAxisN: 2

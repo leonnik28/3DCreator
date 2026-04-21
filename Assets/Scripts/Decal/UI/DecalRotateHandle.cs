@@ -55,7 +55,6 @@ public class DecalRotateHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
         newRotation = (newRotation % 360f + 360f) % 360f;
 
         _targetRect.eulerAngles = new Vector3(0f, 0f, newRotation);
-        DecalLayerDragHandler.EnsureLayerFitsInsideParent(_targetRect, _parentRect);
         _dragStartRotation = newRotation;
         _dragStartAngle = currentAngle;
 
