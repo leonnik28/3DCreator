@@ -269,7 +269,22 @@ public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualPar
         if (projectionZone == null || projectionZone.CanvasAspect <= 0f)
             return _defaultCanvasAspect;
 
-        return projectionZone.CanvasAspect;
+        Rect usableRect = GetUsableCanvasRectForModel(model);
+        float usableWidth = Mathf.Max(usableRect.width, 0.0001f);
+        float usableHeight = Mathf.Max(usableRect.height, 0.0001f);
+        return projectionZone.CanvasAspect * (usableWidth / usableHeight);
+    }
+
+    private Rect GetUsableCanvasRectForModel(GameObject model)
+    {
+        if (model == null)
+            return new Rect(0f, 0f, 1f, 1f);
+
+        var projector = model.GetComponentInChildren<OverallDecalProjector>(true);
+        if (projector == null)
+            return new Rect(0f, 0f, 1f, 1f);
+
+        return projector.GetUsableCanvasRectNormalized();
     }
 
     private void FitWorkingAreaToAspect(RectTransform workingArea, float aspect)

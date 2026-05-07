@@ -277,7 +277,7 @@ Transform:
   m_GameObject: {fileID: 1882472293534208946}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2029373380036745242}
@@ -312,7 +312,7 @@ MonoBehaviour:
   _planeFrontSign: 1
   _rectCurvature: 0
   _noPrintCenterU: 0
-  _noPrintHalfU: 0
+  _noPrintHalfU: 0.192
   _noPrintAtCanvasEdges: 1
   _noPrintCenterV: 0.5
   _noPrintHalfV: 0
@@ -342,11 +342,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e3e48201aad6f4469738045fecb6cfa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _zoneHeight: 0.4
-  _offset: {x: 0, y: -0.05, z: 0.015}
-  _canvasAspect: 0.72
+  _zoneHeight: 1.2
+  _offset: {x: 0, y: 0, z: 0}
+  _canvasAspect: 0.7
   _surfaceRenderer: {fileID: 3488566962292631322}
   _useZoneTransformAxes: 1
+  _flipCanvasX: 0
 --- !u!1 &4919651152790733602
 GameObject:
   m_ObjectHideFlags: 0

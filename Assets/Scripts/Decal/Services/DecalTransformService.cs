@@ -36,7 +36,14 @@ public class DecalTransformService
         {
             if (TryGetClippedRectInPreview(layerRect, previewRect, canvas, out var clippedCenter, out var clippedSize))
             {
-                var zoneWorldPoint = GetZoneWorldPoint(clippedCenter);
+                Rect usableRect = GetUsableCanvasRectNormalized();
+                Vector2 zoneCenterUv = RemapFromUsableCanvas(clippedCenter, usableRect);
+                Vector2 zoneSizeUv = new Vector2(
+                    clippedSize.x * usableRect.width,
+                    clippedSize.y * usableRect.height
+                );
+
+                var zoneWorldPoint = GetZoneWorldPoint(zoneCenterUv);
                 GetProjectionSurfaceBasis(out _, out _, out _, out Vector3 surfaceNormal);
                 var ray = new Ray(zoneWorldPoint + surfaceNormal * 0.5f, -surfaceNormal);
                 if (Physics.Raycast(ray, out var hit, 5f, _modelLayer))
@@ -46,8 +53,8 @@ public class DecalTransformService
 
                 float zoneH = Mathf.Max(_projectionZone.ZoneHeight, 0.001f);
                 float zoneW = zoneH * Mathf.Max(_projectionZone.CanvasAspect, 0.001f);
-                float worldH = Mathf.Max(zoneH * clippedSize.y, 0.001f);
-                float worldW = Mathf.Max(zoneW * clippedSize.x, 0.001f);
+                float worldH = Mathf.Max(zoneH * zoneSizeUv.y, 0.001f);
+                float worldW = Mathf.Max(zoneW * zoneSizeUv.x, 0.001f);
 
                 decal.SetSize(worldH * 0.5f);
                 decal.SetAspectRatio(worldW / worldH);
@@ -171,6 +178,27 @@ public class DecalTransformService
 
         GetProjectionSurfaceBasis(out Vector3 surfaceCenter, out Vector3 surfaceRight, out Vector3 surfaceUp, out _);
         return surfaceCenter + surfaceRight * x + surfaceUp * y;
+    }
+
+    private Rect GetUsableCanvasRectNormalized()
+    {
+        if (_projectionZone == null)
+            return new Rect(0f, 0f, 1f, 1f);
+
+        var projector = _projectionZone.GetComponent<OverallDecalProjector>()
+            ?? _projectionZone.GetComponentInParent<OverallDecalProjector>();
+
+        return projector != null
+            ? projector.GetUsableCanvasRectNormalized()
+            : new Rect(0f, 0f, 1f, 1f);
+    }
+
+    private static Vector2 RemapFromUsableCanvas(Vector2 uv, Rect usableRect)
+    {
+        return new Vector2(
+            Mathf.Lerp(usableRect.xMin, usableRect.xMax, uv.x),
+            Mathf.Lerp(usableRect.yMin, usableRect.yMax, uv.y)
+        );
     }
 
     private void GetProjectionSurfaceBasis(out Vector3 center, out Vector3 right, out Vector3 up, out Vector3 normal)

@@ -74,6 +74,31 @@ public class OverallDecalProjector : MonoBehaviour
     private MaterialPropertyBlock _propBlock;
     private bool _initialized;
 
+    public Rect GetUsableCanvasRectNormalized()
+    {
+        float xMin = 0f;
+        float xMax = 1f;
+        float yMin = 0f;
+        float yMax = 1f;
+
+        if (_noPrintHalfU > 0f && _noPrintAtCanvasEdges)
+        {
+            xMin = Mathf.Clamp01(_noPrintHalfU);
+            xMax = Mathf.Clamp01(1f - _noPrintHalfU);
+        }
+
+        if (_noPrintHalfV > 0f && _noPrintAtCanvasEdgesV)
+        {
+            yMin = Mathf.Clamp01(_noPrintHalfV);
+            yMax = Mathf.Clamp01(1f - _noPrintHalfV);
+        }
+
+        if (xMax <= xMin || yMax <= yMin)
+            return new Rect(0f, 0f, 1f, 1f);
+
+        return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+    }
+
     private void Awake()
     {
         if (_decalManager == null)
@@ -214,7 +239,7 @@ public class OverallDecalProjector : MonoBehaviour
         ApplyRectGeometry();
 
         // Отключаем "ручку" и цилиндрические ограничения в прямоугольных шейдерах.
-        bool useNoPrintOnRect = _projectionKind == ProjectionKind.PillowRect;
+        bool useNoPrintOnRect = _projectionKind == ProjectionKind.PillowRect || _projectionKind == ProjectionKind.TShirtRect;
         _propBlock.SetFloat(NoPrintCenterUId, useNoPrintOnRect ? _noPrintCenterU : 0f);
         _propBlock.SetFloat(NoPrintHalfUId, useNoPrintOnRect ? _noPrintHalfU : 0f);
         _propBlock.SetFloat(NoPrintAtEdgesId, useNoPrintOnRect && _noPrintAtCanvasEdges ? 1f : 0f);
@@ -313,8 +338,9 @@ public class OverallDecalProjector : MonoBehaviour
             _propBlock.SetFloat(PlaneAxisUId, axisU);
             _propBlock.SetFloat(PlaneAxisVId, axisV);
             _propBlock.SetFloat(PlaneAxisNId, axisN);
-            _propBlock.SetFloat(PlaneHalfUId, Mathf.Max(halfU, 0.01f));
-            _propBlock.SetFloat(PlaneHalfVId, Mathf.Max(halfV, 0.01f));
+            float minPlaneHalf = GetMinPlaneHalfExtent();
+            _propBlock.SetFloat(PlaneHalfUId, Mathf.Max(halfU, minPlaneHalf));
+            _propBlock.SetFloat(PlaneHalfVId, Mathf.Max(halfV, minPlaneHalf));
             _propBlock.SetVector(PlaneCenterId, b.center);
             _propBlock.SetFloat(PlaneOffsetId, planeOffset);
             _propBlock.SetFloat(PlaneNormalSignId, Mathf.Sign(_planeFrontSign));
@@ -418,14 +444,20 @@ public class OverallDecalProjector : MonoBehaviour
         _propBlock.SetFloat(PlaneAxisUId, axisU);
         _propBlock.SetFloat(PlaneAxisVId, axisV);
         _propBlock.SetFloat(PlaneAxisNId, axisN);
-        _propBlock.SetFloat(PlaneHalfUId, Mathf.Max(halfU, 0.01f));
-        _propBlock.SetFloat(PlaneHalfVId, Mathf.Max(halfV, 0.01f));
+        float minPlaneHalf = GetMinPlaneHalfExtent();
+        _propBlock.SetFloat(PlaneHalfUId, Mathf.Max(halfU, minPlaneHalf));
+        _propBlock.SetFloat(PlaneHalfVId, Mathf.Max(halfV, minPlaneHalf));
         _propBlock.SetVector(PlaneCenterId, zoneCenterOS);
         _propBlock.SetFloat(PlaneOffsetId, planeOffset);
         _propBlock.SetFloat(PlaneNormalSignId, normalSign * Mathf.Sign(_planeFrontSign));
         _propBlock.SetFloat(FrontOnlyId, _projectionKind == ProjectionKind.PosterRect ? 0f : 1f);
         _propBlock.SetFloat(CurvatureId, Mathf.Max(_rectCurvature, GetPresetCurvature()));
         return true;
+    }
+
+    private float GetMinPlaneHalfExtent()
+    {
+        return _projectionKind == ProjectionKind.TShirtRect ? 0.000001f : 0.01f;
     }
 
     private void GetProjectionSurfaceBasis(out Vector3 center, out Vector3 right, out Vector3 up, out Vector3 normal)
