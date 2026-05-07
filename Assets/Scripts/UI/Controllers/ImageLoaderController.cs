@@ -37,6 +37,10 @@ public class ImageLoaderController : MonoBehaviour
     private void OnTextureLoadError(string error)
     {
         SetLoading(false);
+
+        if (string.IsNullOrEmpty(error) || error == TextureLoadService.UserCancelledError)
+            return;
+
         Debug.LogError($"Failed to load texture: {error}");
     }
 

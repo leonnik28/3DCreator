@@ -5,6 +5,8 @@ using System.Collections;
 
 public class TextureLoadService
 {
+    public const string UserCancelledError = "__IMAGE_PICKER_CANCELLED__";
+
     private MonoBehaviour _coroutineRunner;
     private int _maxTextureSize = 1024;
 
@@ -21,21 +23,76 @@ public class TextureLoadService
         {
             _coroutineRunner.StartCoroutine(LoadFromFileCoroutine(path, onSuccess, onError));
         }
+        else
+        {
+            onError?.Invoke(UserCancelledError);
+        }
+#elif UNITY_STANDALONE_WIN
+        _coroutineRunner.StartCoroutine(LoadFromWindowsFileDialogCoroutine(onSuccess, onError));
 #elif UNITY_ANDROID || UNITY_IOS
-        NativeGallery.Permission permission = NativeGallery.GetImageFromGallery((path) =>
+        bool requestStarted = NativeGalleryBridge.TryGetImageFromGallery((path) =>
         {
             if (!string.IsNullOrEmpty(path))
             {
-                coroutineRunner.StartCoroutine(LoadFromFileCoroutine(path, onSuccess, onError));
+                _coroutineRunner.StartCoroutine(LoadFromFileCoroutine(path, onSuccess, onError));
             }
-        }, "Select Image");
-        
-        if (permission == NativeGallery.Permission.Denied)
+            else
+            {
+                onError?.Invoke(UserCancelledError);
+            }
+        }, "Select Image", out bool permissionDenied, out string error);
+
+        if (!requestStarted)
+        {
+            onError?.Invoke(error);
+        }
+        else if (permissionDenied)
         {
             onError?.Invoke("Gallery access denied");
         }
+#else
+        onError?.Invoke("Image picking is not implemented for this platform.");
 #endif
     }
+
+#if UNITY_STANDALONE_WIN
+    private IEnumerator LoadFromWindowsFileDialogCoroutine(Action<Texture2D> onSuccess, Action<string> onError)
+    {
+        FullScreenMode originalMode = Screen.fullScreenMode;
+        bool restoreMode = originalMode != FullScreenMode.Windowed;
+
+        if (restoreMode)
+        {
+            Screen.fullScreenMode = FullScreenMode.Windowed;
+            yield return null;
+            yield return new WaitForEndOfFrame();
+        }
+
+        Debug.Log("Opening Windows image picker...");
+
+        bool dialogOpened = WindowsFileDialogBridge.TryOpenImageFilePanel("Select Image", out string path, out string error);
+
+        if (restoreMode)
+        {
+            Screen.fullScreenMode = originalMode;
+        }
+
+        if (!dialogOpened)
+        {
+            onError?.Invoke(error);
+            yield break;
+        }
+
+        if (string.IsNullOrEmpty(path))
+        {
+            onError?.Invoke(UserCancelledError);
+            yield break;
+        }
+
+        Debug.Log($"Selected image path: {path}");
+        yield return _coroutineRunner.StartCoroutine(LoadFromFileCoroutine(path, onSuccess, onError));
+    }
+#endif
 
     private IEnumerator LoadFromFileCoroutine(string path, Action<Texture2D> onSuccess, Action<string> onError)
     {

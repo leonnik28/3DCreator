@@ -72,7 +72,9 @@ public class OverallDecalProjector : MonoBehaviour
     private static readonly int CurvatureId      = Shader.PropertyToID("_Curvature");
 
     private MaterialPropertyBlock _propBlock;
+#if UNITY_EDITOR
     private bool _initialized;
+#endif
 
     public Rect GetUsableCanvasRectNormalized()
     {
@@ -141,7 +143,9 @@ public class OverallDecalProjector : MonoBehaviour
         if (_objectRenderer == null) return;
         if (_propBlock == null)
             _propBlock = new MaterialPropertyBlock();
+#if UNITY_EDITOR
         _initialized = true;
+#endif
     }
 
     private void ApplyToRenderer()
