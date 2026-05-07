@@ -58,24 +58,10 @@ public class TextureLoadService
 #if UNITY_STANDALONE_WIN
     private IEnumerator LoadFromWindowsFileDialogCoroutine(Action<Texture2D> onSuccess, Action<string> onError)
     {
-        FullScreenMode originalMode = Screen.fullScreenMode;
-        bool restoreMode = originalMode != FullScreenMode.Windowed;
-
-        if (restoreMode)
-        {
-            Screen.fullScreenMode = FullScreenMode.Windowed;
-            yield return null;
-            yield return new WaitForEndOfFrame();
-        }
-
-        Debug.Log("Opening Windows image picker...");
+        // Больше не переключаем режим экрана — окно остаётся полноэкранным
+        Debug.Log("Opening Windows image picker (fullscreen)...");
 
         bool dialogOpened = WindowsFileDialogBridge.TryOpenImageFilePanel("Select Image", out string path, out string error);
-
-        if (restoreMode)
-        {
-            Screen.fullScreenMode = originalMode;
-        }
 
         if (!dialogOpened)
         {
