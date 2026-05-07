@@ -7,11 +7,12 @@ using Fotocentr.Core;
 /// <summary>
 /// UI ���� ������ � ���������� ������ � ���������� ��������
 /// </summary>
-public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerClickHandler, IBeginDragHandler, IDragHandler
+public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerDownHandler, IPointerClickHandler, IBeginDragHandler, IDragHandler, ICanvasRaycastFilter
 {
     [SerializeField] private RectTransform _layerRect;
     [SerializeField] private RawImage _layerImage;
     [SerializeField, Range(0.5f, 10f)] private float _dragSensitivity = 10f;
+    [SerializeField, Range(0f, 1f)] private float _alphaRaycastThreshold = 0.05f;
 
     public DecalController SourceDecal { get; private set; }
     public RectTransform RectTransform => _layerRect;
@@ -157,9 +158,49 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerCli
             : new Rect(0f, 0f, 1f, 1f);
     }
 
+    public bool IsRaycastLocationValid(Vector2 screenPoint, Camera eventCamera)
+    {
+        if (_layerRect == null || _layerImage == null)
+            return false;
+
+        var texture = _layerImage.texture as Texture2D;
+        if (texture == null)
+            return true;
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _layerRect, screenPoint, eventCamera, out var localPoint))
+        {
+            return false;
+        }
+
+        Rect rect = _layerRect.rect;
+        float normalizedX = Mathf.InverseLerp(rect.xMin, rect.xMax, localPoint.x);
+        float normalizedY = Mathf.InverseLerp(rect.yMin, rect.yMax, localPoint.y);
+
+        Rect uvRect = _layerImage.uvRect;
+        float sampleX = uvRect.x + normalizedX * uvRect.width;
+        float sampleY = uvRect.y + normalizedY * uvRect.height;
+
+        try
+        {
+            return texture.GetPixelBilinear(sampleX, sampleY).a >= _alphaRaycastThreshold;
+        }
+        catch (UnityException)
+        {
+            // For non-readable runtime textures we keep the old behavior instead of breaking input.
+            return true;
+        }
+    }
+
     public void OnPointerClick(PointerEventData eventData)
     {
         if (!_wasDragging)
+            OnLayerClicked?.Invoke(SourceDecal);
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
             OnLayerClicked?.Invoke(SourceDecal);
     }
 

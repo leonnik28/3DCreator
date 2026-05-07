@@ -64,6 +64,7 @@ public class OverallDecalProjector : MonoBehaviour
     private static readonly int PlaneHalfVId     = Shader.PropertyToID("_PlaneHalfV");
     private static readonly int PlaneCenterId    = Shader.PropertyToID("_PlaneCenterOS");
     private static readonly int PlaneOffsetId    = Shader.PropertyToID("_PlaneOffset");
+    private static readonly int PlaneNormalSignId = Shader.PropertyToID("_PlaneNormalSign");
     private static readonly int FrontOnlyId      = Shader.PropertyToID("_FrontOnly");
     private static readonly int CurvatureId      = Shader.PropertyToID("_Curvature");
 
@@ -310,6 +311,7 @@ public class OverallDecalProjector : MonoBehaviour
             _propBlock.SetFloat(PlaneHalfVId, Mathf.Max(halfV, 0.01f));
             _propBlock.SetVector(PlaneCenterId, b.center);
             _propBlock.SetFloat(PlaneOffsetId, planeOffset);
+            _propBlock.SetFloat(PlaneNormalSignId, Mathf.Sign(_planeFrontSign));
             _propBlock.SetFloat(FrontOnlyId, _projectionKind == ProjectionKind.PosterRect ? 0f : 1f);
 
             float presetCurvature = GetPresetCurvature();
@@ -324,6 +326,7 @@ public class OverallDecalProjector : MonoBehaviour
             _propBlock.SetFloat(PlaneHalfVId, 0.5f);
             _propBlock.SetVector(PlaneCenterId, Vector4.zero);
             _propBlock.SetFloat(PlaneOffsetId, Mathf.Sign(_planeFrontSign) * 0.01f);
+            _propBlock.SetFloat(PlaneNormalSignId, Mathf.Sign(_planeFrontSign));
             _propBlock.SetFloat(FrontOnlyId, _projectionKind == ProjectionKind.PosterRect ? 0f : 1f);
             _propBlock.SetFloat(CurvatureId, GetPresetCurvature());
         }
@@ -413,6 +416,7 @@ public class OverallDecalProjector : MonoBehaviour
         _propBlock.SetFloat(PlaneHalfVId, Mathf.Max(halfV, 0.01f));
         _propBlock.SetVector(PlaneCenterId, zoneCenterOS);
         _propBlock.SetFloat(PlaneOffsetId, planeOffset);
+        _propBlock.SetFloat(PlaneNormalSignId, normalSign * Mathf.Sign(_planeFrontSign));
         _propBlock.SetFloat(FrontOnlyId, _projectionKind == ProjectionKind.PosterRect ? 0f : 1f);
         _propBlock.SetFloat(CurvatureId, Mathf.Max(_rectCurvature, GetPresetCurvature()));
         return true;
@@ -481,6 +485,9 @@ public class OverallDecalProjector : MonoBehaviour
         if (_projectionZone == null)
             return _objectRenderer;
 
+        if (_projectionZone.SurfaceRenderer != null)
+            return _projectionZone.SurfaceRenderer;
+
         if (_objectRenderer != null && _projectionZone.GetComponentInChildren<Renderer>(true) == _objectRenderer)
             return _objectRenderer;
 
@@ -525,7 +532,12 @@ public class OverallDecalProjector : MonoBehaviour
         normal = Vector3.Cross(right, up).normalized;
         if (Vector3.Dot(normal, axisNormal) < 0f)
         {
-            right = -right;
+            normal = -normal;
+        }
+
+        if (TryGetAverageMeshNormalWorld(renderer, out Vector3 averageNormalWorld) &&
+            Vector3.Dot(normal, averageNormalWorld) < 0f)
+        {
             normal = -normal;
         }
 
@@ -616,6 +628,27 @@ public class OverallDecalProjector : MonoBehaviour
     private static Vector3 AbsVector(Vector3 value)
     {
         return new Vector3(Mathf.Abs(value.x), Mathf.Abs(value.y), Mathf.Abs(value.z));
+    }
+
+    private static bool TryGetAverageMeshNormalWorld(Renderer renderer, out Vector3 averageNormalWorld)
+    {
+        averageNormalWorld = Vector3.zero;
+
+        var meshFilter = renderer != null ? renderer.GetComponent<MeshFilter>() : null;
+        var mesh = meshFilter != null ? meshFilter.sharedMesh : null;
+        if (mesh == null || mesh.normals == null || mesh.normals.Length == 0)
+            return false;
+
+        Vector3 averageNormalOS = Vector3.zero;
+        var normals = mesh.normals;
+        for (int i = 0; i < normals.Length; i++)
+            averageNormalOS += normals[i];
+
+        if (averageNormalOS.sqrMagnitude < 0.000001f)
+            return false;
+
+        averageNormalWorld = renderer.transform.TransformDirection(averageNormalOS.normalized).normalized;
+        return averageNormalWorld.sqrMagnitude > 0.000001f;
     }
 
     private float GetAxisExtentInRendererLocal(Transform rendererTransform, Vector3 worldAxisDirection, float halfWorldSize, int axis)

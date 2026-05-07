@@ -225,7 +225,9 @@ public class DecalTransformService
         if (_projectionZone == null)
             return null;
 
-        return _projectionZone.GetComponent<Renderer>() ?? _projectionZone.GetComponentInChildren<Renderer>(true);
+        return _projectionZone.SurfaceRenderer
+            ?? _projectionZone.GetComponent<Renderer>()
+            ?? _projectionZone.GetComponentInChildren<Renderer>(true);
     }
 
     private bool TryGetFlatSurfaceAxes(Renderer renderer, out Vector3 right, out Vector3 up, out Vector3 normal)
@@ -266,7 +268,12 @@ public class DecalTransformService
         normal = Vector3.Cross(right, up).normalized;
         if (Vector3.Dot(normal, axisNormal) < 0f)
         {
-            right = -right;
+            normal = -normal;
+        }
+
+        if (TryGetAverageMeshNormalWorld(renderer, out Vector3 averageNormalWorld) &&
+            Vector3.Dot(normal, averageNormalWorld) < 0f)
+        {
             normal = -normal;
         }
 
@@ -290,6 +297,27 @@ public class DecalTransformService
     private static Vector3 AbsVector(Vector3 value)
     {
         return new Vector3(Mathf.Abs(value.x), Mathf.Abs(value.y), Mathf.Abs(value.z));
+    }
+
+    private static bool TryGetAverageMeshNormalWorld(Renderer renderer, out Vector3 averageNormalWorld)
+    {
+        averageNormalWorld = Vector3.zero;
+
+        var meshFilter = renderer != null ? renderer.GetComponent<MeshFilter>() : null;
+        var mesh = meshFilter != null ? meshFilter.sharedMesh : null;
+        if (mesh == null || mesh.normals == null || mesh.normals.Length == 0)
+            return false;
+
+        Vector3 averageNormalOS = Vector3.zero;
+        var normals = mesh.normals;
+        for (int i = 0; i < normals.Length; i++)
+            averageNormalOS += normals[i];
+
+        if (averageNormalOS.sqrMagnitude < 0.000001f)
+            return false;
+
+        averageNormalWorld = renderer.transform.TransformDirection(averageNormalOS.normalized).normalized;
+        return averageNormalWorld.sqrMagnitude > 0.000001f;
     }
 
     private Vector2 GetLayerCenterViewportPoint(RectTransform layerRect, Canvas canvas)

@@ -24,7 +24,9 @@ public class DecalCenterDragZone : MonoBehaviour, IBeginDragHandler, IDragHandle
         if (img != null)
         {
             img.color = new Color(1, 1, 1, 0.001f);
-            img.raycastTarget = true;
+            // UIDecalLayer already handles click/drag input. This overlay should not block
+            // clicks that need to pass through to other visible decal layers.
+            img.raycastTarget = false;
         }
 
         var rt = GetComponent<RectTransform>();
