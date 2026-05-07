@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -54,6 +55,11 @@ public static class WindowsFileDialogBridge
         path = null;
         error = null;
 
+        if (TryOpenWithExternalPowerShell(title, out path, out error))
+            return true;
+
+        error = null;
+
         if (TryOpenWithWinForms(title, out path, out error))
             return true;
 
@@ -88,6 +94,69 @@ public static class WindowsFileDialogBridge
 
         error = $"Windows file dialog failed with error code {dialogError}.";
         return false;
+    }
+
+    private static bool TryOpenWithExternalPowerShell(string title, out string path, out string error)
+    {
+        path = null;
+        error = null;
+
+        string escapedTitle = EscapeForSingleQuotedPowerShell(title);
+        string script =
+            "Add-Type -AssemblyName System.Windows.Forms; " +
+            "$dialog = New-Object System.Windows.Forms.OpenFileDialog; " +
+            "$dialog.Title = '" + escapedTitle + "'; " +
+            "$dialog.Filter = 'Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.gif|All Files|*.*'; " +
+            "$dialog.Multiselect = $false; " +
+            "$dialog.CheckFileExists = $true; " +
+            "$dialog.RestoreDirectory = $true; " +
+            "if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { " +
+            "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; " +
+            "[Console]::Write($dialog.FileName) }";
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell.exe",
+            Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -STA -Command \"" + EscapeForDoubleQuotedArgument(script) + "\"",
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8
+        };
+
+        try
+        {
+            using (var process = Process.Start(startInfo))
+            {
+                if (process == null)
+                {
+                    error = "Failed to start PowerShell file picker.";
+                    return false;
+                }
+
+                string output = process.StandardOutput.ReadToEnd();
+                string stderr = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    error = string.IsNullOrWhiteSpace(stderr)
+                        ? $"PowerShell file picker failed with exit code {process.ExitCode}."
+                        : stderr.Trim();
+                    return false;
+                }
+
+                path = string.IsNullOrWhiteSpace(output) ? null : output.Trim();
+                return true;
+            }
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+            return false;
+        }
     }
 
     private static bool TryOpenWithWinForms(string title, out string path, out string error)
@@ -171,5 +240,18 @@ public static class WindowsFileDialogBridge
     private static string UnwrapException(Exception exception)
     {
         return exception.InnerException != null ? exception.InnerException.Message : exception.Message;
+    }
+
+    private static string EscapeForSingleQuotedPowerShell(string value)
+    {
+        return string.IsNullOrEmpty(value) ? string.Empty : value.Replace("'", "''");
+    }
+
+    private static string EscapeForDoubleQuotedArgument(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return string.Empty;
+
+        return value.Replace("\"", "\\\"");
     }
 }
