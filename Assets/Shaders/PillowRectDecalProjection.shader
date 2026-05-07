@@ -7,6 +7,7 @@
         _DecalRotation ("Decal Rotation (degrees)", Float) = 0
         _MirrorU ("Mirror U (0/1)", Float) = 0
         _MirrorV ("Mirror V (0/1)", Float) = 0
+        _CanvasFlipX ("Canvas Flip X (0/1)", Float) = 0
         _PlaneAxisU ("U Axis: 0=X, 1=Y, 2=Z", Float) = 0
         _PlaneAxisV ("V Axis: 0=X, 1=Y, 2=Z", Float) = 1
         _PlaneAxisN ("Normal Axis: 0=X, 1=Y, 2=Z", Float) = 2
@@ -43,6 +44,7 @@
             float _DecalRotation;
             float _MirrorU;
             float _MirrorV;
+            float _CanvasFlipX;
             float _PlaneAxisU;
             float _PlaneAxisV;
             float _PlaneAxisN;
@@ -101,6 +103,8 @@
                 float vNorm = vLocal / max(_PlaneHalfV, 0.001);
 
                 float2 canvasUV = float2(0.5 - uNorm * 0.5, vNorm * 0.5 + 0.5);
+                if (_CanvasFlipX > 0.5)
+                    canvasUV.x = 1.0 - canvasUV.x;
                 if (canvasUV.x < 0.0 || canvasUV.x > 1.0 || canvasUV.y < 0.0 || canvasUV.y > 1.0)
                     return _BaseColor;
 

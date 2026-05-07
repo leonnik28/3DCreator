@@ -172,3 +172,6 @@ MonoBehaviour:
   _zoneHeight: 0.72
   _offset: {x: 0, y: 0.1, z: 0}
   _canvasAspect: 0.78
+  _surfaceRenderer: {fileID: 0}
+  _useZoneTransformAxes: 0
+  _flipCanvasX: 1

@@ -47,6 +47,9 @@ public class OverallDecalProjector : MonoBehaviour
     private static readonly int DecalRectId     = Shader.PropertyToID("_DecalRect");
     private static readonly int DecalRotationId = Shader.PropertyToID("_DecalRotation");
     private static readonly int DecalMirrorXId  = Shader.PropertyToID("_DecalMirrorX");
+    private static readonly int MirrorUId       = Shader.PropertyToID("_MirrorU");
+    private static readonly int MirrorVId       = Shader.PropertyToID("_MirrorV");
+    private static readonly int CanvasFlipXId   = Shader.PropertyToID("_CanvasFlipX");
     private static readonly int CylRadiusId     = Shader.PropertyToID("_CylRadius");
     private static readonly int CylHalfHId      = Shader.PropertyToID("_CylHalfH");
     private static readonly int HeightAxisId    = Shader.PropertyToID("_HeightAxis");
@@ -185,6 +188,9 @@ public class OverallDecalProjector : MonoBehaviour
         _propBlock.SetVector(DecalRectId, new Vector4(center.x, center.y, halfSize.x, halfSize.y));
         _propBlock.SetFloat(DecalRotationId, rotationDeg);
         _propBlock.SetFloat(DecalMirrorXId, decal.IsMirroredX() ? 1f : 0f);
+        _propBlock.SetFloat(MirrorUId, decal.IsMirroredX() ? 1f : 0f);
+        _propBlock.SetFloat(MirrorVId, 0f);
+        _propBlock.SetFloat(CanvasFlipXId, _projectionZone != null && _projectionZone.FlipCanvasX ? 1f : 0f);
         // BaseColor ( _BaseColor ) управляется ModelColorizer по выбранной части.
         // Здесь не трогаем, иначе Apply цвета может перетираться.
         ApplyToRenderer();

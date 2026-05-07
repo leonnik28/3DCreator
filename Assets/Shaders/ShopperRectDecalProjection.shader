@@ -6,6 +6,7 @@ Shader "Universal Render Pipeline/ShopperRectDecalProjection"
         _DecalRect ("Decal Rect (centerU, centerV, halfW, halfH)", Vector) = (0.5, 0.5, 0.25, 0.25)
         _DecalRotation ("Decal Rotation (degrees)", Float) = 0
         _DecalMirrorX ("Decal Mirror X", Float) = 0
+        _CanvasFlipX ("Canvas Flip X (0/1)", Float) = 0
         _PlaneAxisU ("U Axis: 0=X, 1=Y, 2=Z", Float) = 2
         _PlaneAxisV ("V Axis: 0=X, 1=Y, 2=Z", Float) = 1
         _PlaneAxisN ("Normal Axis: 0=X, 1=Y, 2=Z", Float) = 0
@@ -31,7 +32,7 @@ Shader "Universal Render Pipeline/ShopperRectDecalProjection"
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             TEXTURE2D(_DecalTex); SAMPLER(sampler_DecalTex);
-            float4 _DecalRect; float _DecalRotation; float _DecalMirrorX; float _PlaneAxisU; float _PlaneAxisV; float _PlaneAxisN;
+            float4 _DecalRect; float _DecalRotation; float _DecalMirrorX; float _CanvasFlipX; float _PlaneAxisU; float _PlaneAxisV; float _PlaneAxisN;
             float _PlaneHalfU; float _PlaneHalfV; float4 _PlaneCenterOS; float _PlaneOffset; float _FrontOnly;
             float _Curvature; float4 _BaseColor; float _AlphaClip;
             struct Attributes { float4 positionOS:POSITION; float3 normalOS:NORMAL; };
@@ -44,6 +45,7 @@ Shader "Universal Render Pipeline/ShopperRectDecalProjection"
                 float uLocal=AxisValue(pos,_PlaneAxisU)-AxisValue(center,_PlaneAxisU); float vLocal=AxisValue(pos,_PlaneAxisV)-AxisValue(center,_PlaneAxisV); float nLocal=AxisValue(pos,_PlaneAxisN);
                 float uNorm=uLocal/max(_PlaneHalfU,0.001); float vNorm=vLocal/max(_PlaneHalfV,0.001);
                 float2 canvasUV=float2(uNorm*0.5+0.5,vNorm*0.5+0.5);
+                if(_CanvasFlipX>0.5) canvasUV.x=1.0-canvasUV.x;
                 if(canvasUV.x<0.0||canvasUV.x>1.0||canvasUV.y<0.0||canvasUV.y>1.0) return _BaseColor;
                 float3 nAxis=AxisVector(_PlaneAxisN); float3 uAxis=AxisVector(_PlaneAxisU); float3 vAxis=AxisVector(_PlaneAxisV);
                 float3 curvedOut=normalize(nAxis+_Curvature*(uNorm*uAxis+vNorm*vAxis*0.35));

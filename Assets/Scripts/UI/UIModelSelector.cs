@@ -29,6 +29,9 @@ public class UIModelSelector : MonoBehaviour
     [Tooltip("Выравнивание превью в строке. MiddleLeft — как раньше; MiddleCenter — если мало моделей и полоса не заполняет ширину, не «прилипает» к левому краю.")]
     [SerializeField] private TextAnchor _itemsAlignment = TextAnchor.MiddleLeft;
 
+    [Header("Selection Visuals")]
+    [SerializeField, Range(0.1f, 1f)] private float _inactiveAlpha = 0.6f;
+
     private readonly List<GameObject> _items = new List<GameObject>();
 
     private IEnumerator Start()
@@ -247,6 +250,8 @@ public class UIModelSelector : MonoBehaviour
             var text = go.GetComponentInChildren<TextMeshProUGUI>();
             if (text != null)
                 text.text = string.IsNullOrEmpty(entry.DisplayName) ? entry.Prefab?.name ?? "?" : entry.DisplayName;
+
+            EnsureCanvasGroup(go);
         }
 
         Canvas.ForceUpdateCanvases();
@@ -266,9 +271,11 @@ public class UIModelSelector : MonoBehaviour
         for (int i = 0; i < _items.Count; i++)
         {
             var item = _items[i];
+            bool isSelected = i == idx;
+
             var canvasGroup = item.GetComponent<CanvasGroup>();
             if (canvasGroup != null)
-                canvasGroup.alpha = i == idx ? 1f : 0.6f;
+                canvasGroup.alpha = isSelected ? 1f : _inactiveAlpha;
         }
 
         if (_label != null && _modelManager.Database != null && idx >= 0 && idx < _modelManager.Database.Count)
@@ -276,5 +283,14 @@ public class UIModelSelector : MonoBehaviour
             var entry = _modelManager.Database[idx];
             _label.text = string.IsNullOrEmpty(entry.DisplayName) ? entry.Prefab?.name ?? "" : entry.DisplayName;
         }
+    }
+
+    private void EnsureCanvasGroup(GameObject item)
+    {
+        if (item == null)
+            return;
+
+        if (item.GetComponent<CanvasGroup>() == null)
+            item.AddComponent<CanvasGroup>();
     }
 }

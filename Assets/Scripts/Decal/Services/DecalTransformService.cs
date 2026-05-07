@@ -163,6 +163,9 @@ public class DecalTransformService
         float zoneHeight = Mathf.Max(_projectionZone.ZoneHeight, 0.001f);
         float zoneWidth = zoneHeight * Mathf.Max(_projectionZone.CanvasAspect, 0.001f);
 
+        if (_projectionZone.FlipCanvasX)
+            uv.x = 1f - uv.x;
+
         float x = (uv.x - 0.5f) * zoneWidth;
         float y = (uv.y - 0.5f) * zoneHeight;
 

@@ -93,8 +93,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _zoneHeight: 1
-  _offset: {x: 0.15, y: 0, z: 0}
+  _offset: {x: 0, y: 0, z: 0}
   _canvasAspect: 1
+  _surfaceRenderer: {fileID: 0}
+  _useZoneTransformAxes: 0
+  _flipCanvasX: 1
 --- !u!1 &3360637462580399902
 GameObject:
   m_ObjectHideFlags: 0

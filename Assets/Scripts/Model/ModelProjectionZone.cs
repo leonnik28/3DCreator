@@ -21,9 +21,13 @@ public class ModelProjectionZone : MonoBehaviour
     [Tooltip("Если включено, оси зоны берутся с transform этой зоны, а не с renderer. Полезно для импортированных плоских мешей с дочерним поворотом.")]
     [SerializeField] private bool _useZoneTransformAxes = false;
 
+    [Tooltip("Отзеркаливает полотно проекции по горизонтали. Полезно для моделей, у которых печать отображается зеркально.")]
+    [SerializeField] private bool _flipCanvasX = false;
+
     public float ZoneHeight => _zoneHeight;
     public Vector3 Offset => _offset;
     public float CanvasAspect => _canvasAspect;
     public Renderer SurfaceRenderer => _surfaceRenderer;
     public bool UseZoneTransformAxes => _useZoneTransformAxes;
+    public bool FlipCanvasX => _flipCanvasX;
 }
