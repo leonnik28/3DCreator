@@ -24,6 +24,7 @@
         _NoPrintHalfV ("No-Print Half Width V", Range(0,0.5)) = 0
         _NoPrintAtEdgesV ("No-Print At Canvas Edges V (0/1)", Float) = 1
         _BaseColor ("Base Color", Color) = (1,1,1,1)
+        _SurfaceColor ("Surface Color", Color) = (1,1,1,1)
         _AlphaClip ("Alpha Clip Threshold", Range(0,1)) = 0.001
     }
     SubShader
@@ -61,6 +62,7 @@
             float _NoPrintHalfV;
             float _NoPrintAtEdgesV;
             float4 _BaseColor;
+            float4 _SurfaceColor;
             float _AlphaClip;
 
             struct Attributes { float4 positionOS:POSITION; float3 normalOS:NORMAL; };
@@ -106,7 +108,7 @@
                 if (_CanvasFlipX > 0.5)
                     canvasUV.x = 1.0 - canvasUV.x;
                 if (canvasUV.x < 0.0 || canvasUV.x > 1.0 || canvasUV.y < 0.0 || canvasUV.y > 1.0)
-                    return _BaseColor;
+                    return _SurfaceColor;
 
                 float u = canvasUV.x;
                 float halfW = clamp(_NoPrintHalfU, 0.0, 0.5);
@@ -115,12 +117,12 @@
                     if (_NoPrintAtEdges > 0.5)
                     {
                         if (u < halfW || u > (1.0 - halfW))
-                            return _BaseColor;
+                            return _SurfaceColor;
                     }
                     else
                     {
                         if (abs(u - _NoPrintCenterU) < halfW)
-                            return _BaseColor;
+                            return _SurfaceColor;
                     }
                 }
 
@@ -131,12 +133,12 @@
                     if (_NoPrintAtEdgesV > 0.5)
                     {
                         if (v < halfHV || v > (1.0 - halfHV))
-                            return _BaseColor;
+                            return _SurfaceColor;
                     }
                     else
                     {
                         if (abs(v - _NoPrintCenterV) < halfHV)
-                            return _BaseColor;
+                            return _SurfaceColor;
                     }
                 }
 
@@ -146,11 +148,11 @@
                 float3 curvedOut = normalize(nAxis + _Curvature * (uNorm * uAxis + vNorm * vAxis * 0.35));
 
                 if (_FrontOnly > 0.5 && dot(normalOS, curvedOut) <= 0.0)
-                    return _BaseColor;
+                    return _SurfaceColor;
 
                 float depthAllowance = max(_Curvature * 0.08, 0.015);
                 if (abs(nLocal - _PlaneOffset) > depthAllowance)
-                    return _BaseColor;
+                    return _SurfaceColor;
 
                 float2 decalCenter = _DecalRect.xy;
                 float2 decalHalf = _DecalRect.zw;
@@ -161,7 +163,7 @@
                 float2 local = float2(toPoint.x * c + toPoint.y * s, -toPoint.x * s + toPoint.y * c);
 
                 if (abs(local.x) > decalHalf.x || abs(local.y) > decalHalf.y)
-                    return _BaseColor;
+                    return _SurfaceColor;
 
                 float2 mirroredLocal = local;
                 if (_MirrorU > 0.5) mirroredLocal.x = -mirroredLocal.x;
@@ -173,7 +175,7 @@
                 );
 
                 float4 decalCol = SAMPLE_TEXTURE2D(_DecalTex, sampler_DecalTex, decalUV);
-                float4 col = decalCol * _BaseColor;
+                float4 col = decalCol;
                 if (col.a <= _AlphaClip)
                     discard;
 

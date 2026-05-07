@@ -77,7 +77,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _parts:
   - PartId: 0
-    DisplayName: Pillow
+    DisplayName: "\u041F\u043E\u0434\u0443\u0448\u043A\u0430"
     TargetRenderer: {fileID: 3865106109590548171}
     MaterialIndex: 0
 --- !u!114 &5694444683668041069

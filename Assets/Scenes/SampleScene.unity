@@ -9757,6 +9757,7 @@ MonoBehaviour:
   _scrollAnchorMax: {x: 0.96, y: 0.58}
   _autoBuildScrollArea: 1
   _itemsAlignment: 3
+  _inactiveAlpha: 0.6
 --- !u!1 &2069153811
 GameObject:
   m_ObjectHideFlags: 0

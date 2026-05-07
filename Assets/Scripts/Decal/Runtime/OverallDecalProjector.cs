@@ -175,7 +175,8 @@ public class OverallDecalProjector : MonoBehaviour
 
         // Чистим блок, чтобы изменения ModelColorizer по _BaseColor не перетирались
         // "хвостами" предыдущих значений.
-        _propBlock.Clear();
+        if (_objectRenderer != null)
+            _objectRenderer.GetPropertyBlock(_propBlock, _materialIndex);
 
         ApplyGeometryForCurrentMode();
 

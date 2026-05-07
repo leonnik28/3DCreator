@@ -136,6 +136,7 @@ MonoBehaviour:
   _projectionKind: 0
   _previewController: {fileID: 0}
   _decalManager: {fileID: 0}
+  _projectionZone: {fileID: 0}
   _baseColor: {r: 1, g: 1, b: 1, a: 1}
   _vScale: 0.1285
   _planeFrontSign: 1
@@ -143,6 +144,9 @@ MonoBehaviour:
   _noPrintCenterU: 0
   _noPrintHalfU: 0.1
   _noPrintAtCanvasEdges: 1
+  _noPrintCenterV: 0.5
+  _noPrintHalfV: 0
+  _noPrintAtCanvasEdgesV: 1
 --- !u!114 &7801383343380783268
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -157,12 +161,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _parts:
   - PartId: 1
-    DisplayName: Handle
+    DisplayName: "\u0420\u0443\u0447\u043A\u0430"
     TargetRenderer: {fileID: 4672420138868436106}
-    MaterialIndex: 0
-  - PartId: 2
-    DisplayName: OUT
-    TargetRenderer: {fileID: 2362690438376065672}
     MaterialIndex: 0
 --- !u!114 &-6772411923385345556
 MonoBehaviour:
@@ -179,6 +179,9 @@ MonoBehaviour:
   _zoneHeight: 1
   _offset: {x: 0, y: 0, z: 0}
   _canvasAspect: 2.6
+  _surfaceRenderer: {fileID: 0}
+  _useZoneTransformAxes: 0
+  _flipCanvasX: 0
 --- !u!1 &8694762836695106494
 GameObject:
   m_ObjectHideFlags: 0

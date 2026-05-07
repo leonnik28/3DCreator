@@ -159,7 +159,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6131f53135e43cd40881e3698f4291fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _parts: []
+  _parts:
+  - PartId: 1
+    DisplayName: "\u0428\u043E\u043F\u043F\u0435\u0440"
+    TargetRenderer: {fileID: 4850973103631651287}
+    MaterialIndex: 0
 --- !u!114 &4412098222156954572
 MonoBehaviour:
   m_ObjectHideFlags: 0

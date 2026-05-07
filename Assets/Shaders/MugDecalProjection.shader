@@ -26,6 +26,7 @@ Shader "Universal Render Pipeline/MugDecalProjection"
 
         [Header(Appearance)]
         _BaseColor   ("Base Color (mug where no decal)", Color) = (1,1,1,1)
+        _SurfaceColor ("Surface Color", Color) = (1,1,1,1)
         _AlphaClip   ("Alpha Clip Threshold", Range(0,1)) = 0.001
     }
 
@@ -74,6 +75,7 @@ Shader "Universal Render Pipeline/MugDecalProjection"
             float  _NoPrintAtEdges;
 
             float4 _BaseColor;
+            float4 _SurfaceColor;
             float  _AlphaClip;
 
             struct Attributes
@@ -132,7 +134,7 @@ Shader "Universal Render Pipeline/MugDecalProjection"
                 // Наружная область (внешний "пояс") получает проекцию декали.
                 float outerMinRatio = (_OuterOnly > 0.5) ? _OuterMin : 0.01;
                 if (horLen < _CylRadius * outerMinRatio)
-                    return _BaseColor;
+                    return _SurfaceColor;
 
                 if (height < -_CylHalfH || height > _CylHalfH)
                     discard;
@@ -169,7 +171,7 @@ Shader "Universal Render Pipeline/MugDecalProjection"
 
                 // Вне 0..1 — это вне области печати на кружке
                 if (v < 0.0 || v > 1.0)
-                    return _BaseColor;
+                    return _SurfaceColor;
 
                 // Непечатная зона возле ручки (gap по U):
                 // вырезаем сегмент окружности и перераспределяем (remap) оставшуюся часть
@@ -189,7 +191,7 @@ Shader "Universal Render Pipeline/MugDecalProjection"
 
                         // Внутри краевого gap (с двух сторон) — не печатаем
                         if (uRel < halfW || uRel > (1.0 - halfW))
-                            return _BaseColor;
+                            return _SurfaceColor;
 
                         // Remap оставшегося диапазона [halfW .. 1-halfW] -> [0..1]
                         u = (uRel - halfW) / max(1.0 - gapW, 0.0001);
@@ -200,7 +202,7 @@ Shader "Universal Render Pipeline/MugDecalProjection"
                         float sU = frac(u - _NoPrintCenterU + 0.5) - 0.5;
 
                         if (abs(sU) < halfW)
-                            return _BaseColor;
+                            return _SurfaceColor;
 
                         float sU2 = (sU > halfW) ? (sU - gapW) : sU;
                         u = (sU2 + 0.5) / max(1.0 - gapW, 0.0001);
@@ -226,7 +228,7 @@ Shader "Universal Render Pipeline/MugDecalProjection"
 
                 if (!insideDecal)
                 {
-                    return _BaseColor;
+                    return _SurfaceColor;
                 }
 
                 // Map to decal texture UV 0..1
@@ -236,7 +238,7 @@ Shader "Universal Render Pipeline/MugDecalProjection"
                 );
 
                 float4 decalCol = SAMPLE_TEXTURE2D(_DecalTex, sampler_DecalTex, decalUV);
-                float4 col = decalCol * _BaseColor;
+                float4 col = decalCol;
 
                 if (col.a <= _AlphaClip)
                     discard;

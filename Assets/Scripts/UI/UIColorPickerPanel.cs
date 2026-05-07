@@ -224,7 +224,17 @@ public class UIColorPickerPanel : MonoBehaviour
                 if (mats != null && matIndex >= 0 && matIndex < mats.Length)
                 {
                     var mat = mats[matIndex];
-                    if (mat != null && mat.HasProperty("_Color"))
+                    if (mat != null && mat.HasProperty("_SurfaceColor"))
+                    {
+                        _pendingColor = mat.GetColor("_SurfaceColor");
+                        _colorPicker.SetColor(_pendingColor);
+                    }
+                    else if (mat != null && mat.HasProperty("_BaseColor"))
+                    {
+                        _pendingColor = mat.GetColor("_BaseColor");
+                        _colorPicker.SetColor(_pendingColor);
+                    }
+                    else if (mat != null && mat.HasProperty("_Color"))
                     {
                         _pendingColor = mat.color;
                         _colorPicker.SetColor(mat.color);

@@ -81,17 +81,32 @@ public class ModelColorizer : MonoBehaviour
                 _propertyBlocks[key] = block;
             }
 
+            entry.TargetRenderer.GetPropertyBlock(block, i);
+
             var mat = sharedMats[i];
             if (mat != null)
             {
-                if (mat.HasProperty("_Color")) block.SetColor("_Color", color);
-                if (mat.HasProperty("_BaseColor")) block.SetColor("_BaseColor", color);
+                bool hasSurfaceColor = mat.HasProperty("_SurfaceColor");
+
+                if (mat.HasProperty("_Color"))
+                    block.SetColor("_Color", color);
+
+                if (hasSurfaceColor)
+                {
+                    block.SetColor("_SurfaceColor", color);
+                    if (mat.HasProperty("_BaseColor"))
+                        block.SetColor("_BaseColor", Color.white);
+                }
+                else if (mat.HasProperty("_BaseColor"))
+                {
+                    block.SetColor("_BaseColor", color);
+                }
             }
 
             // Применяем блок к Renderer целиком.
             // Для большинства случаев "часть" = отдельный Renderer, поэтому этого достаточно
             // и надёжнее, чем SetPropertyBlock(..., materialIndex).
-            entry.TargetRenderer.SetPropertyBlock(block);
+            entry.TargetRenderer.SetPropertyBlock(block, i);
         }
 
         _partColorCache[partIndex] = color;

@@ -17,6 +17,7 @@ Shader "Universal Render Pipeline/ShopperRectDecalProjection"
         _FrontOnly ("Front Only (0/1)", Float) = 1
         _Curvature ("Curvature Amount", Range(0,1)) = 0.1
         _BaseColor ("Base Color", Color) = (1,1,1,1)
+        _SurfaceColor ("Surface Color", Color) = (1,1,1,1)
         _AlphaClip ("Alpha Clip Threshold", Range(0,1)) = 0.001
     }
     SubShader
@@ -34,7 +35,7 @@ Shader "Universal Render Pipeline/ShopperRectDecalProjection"
             TEXTURE2D(_DecalTex); SAMPLER(sampler_DecalTex);
             float4 _DecalRect; float _DecalRotation; float _DecalMirrorX; float _CanvasFlipX; float _PlaneAxisU; float _PlaneAxisV; float _PlaneAxisN;
             float _PlaneHalfU; float _PlaneHalfV; float4 _PlaneCenterOS; float _PlaneOffset; float _FrontOnly;
-            float _Curvature; float4 _BaseColor; float _AlphaClip;
+            float _Curvature; float4 _BaseColor; float4 _SurfaceColor; float _AlphaClip;
             struct Attributes { float4 positionOS:POSITION; float3 normalOS:NORMAL; };
             struct Varyings { float4 positionHCS:SV_POSITION; float3 positionOS:TEXCOORD0; float3 normalOS:TEXCOORD1; };
             float AxisValue(float3 v, float axis){ if(axis<0.5)return v.x; if(axis<1.5)return v.y; return v.z; }
@@ -46,18 +47,18 @@ Shader "Universal Render Pipeline/ShopperRectDecalProjection"
                 float uNorm=uLocal/max(_PlaneHalfU,0.001); float vNorm=vLocal/max(_PlaneHalfV,0.001);
                 float2 canvasUV=float2(uNorm*0.5+0.5,vNorm*0.5+0.5);
                 if(_CanvasFlipX>0.5) canvasUV.x=1.0-canvasUV.x;
-                if(canvasUV.x<0.0||canvasUV.x>1.0||canvasUV.y<0.0||canvasUV.y>1.0) return _BaseColor;
+                if(canvasUV.x<0.0||canvasUV.x>1.0||canvasUV.y<0.0||canvasUV.y>1.0) return _SurfaceColor;
                 float3 nAxis=AxisVector(_PlaneAxisN); float3 uAxis=AxisVector(_PlaneAxisU); float3 vAxis=AxisVector(_PlaneAxisV);
                 float3 curvedOut=normalize(nAxis+_Curvature*(uNorm*uAxis+vNorm*vAxis*0.35));
-                if(_FrontOnly>0.5&&dot(normalOS,curvedOut)<=0.0) return _BaseColor;
-                float depthAllowance=max(_Curvature*0.05,0.01); if(abs(nLocal-_PlaneOffset)>depthAllowance) return _BaseColor;
+                if(_FrontOnly>0.5&&dot(normalOS,curvedOut)<=0.0) return _SurfaceColor;
+                float depthAllowance=max(_Curvature*0.05,0.01); if(abs(nLocal-_PlaneOffset)>depthAllowance) return _SurfaceColor;
                 float2 decalCenter=_DecalRect.xy; float2 decalHalf=_DecalRect.zw;
                 float rad=_DecalRotation*0.017453293; float c=cos(rad); float s=sin(rad); float2 toPoint=canvasUV-decalCenter;
                 float2 local=float2(toPoint.x*c+toPoint.y*s,-toPoint.x*s+toPoint.y*c);
                 if(_DecalMirrorX>0.5) local.x=-local.x;
-                if(abs(local.x)>decalHalf.x||abs(local.y)>decalHalf.y) return _BaseColor;
+                if(abs(local.x)>decalHalf.x||abs(local.y)>decalHalf.y) return _SurfaceColor;
                 float2 decalUV=float2((local.x+decalHalf.x)/(2.0*max(decalHalf.x,0.001)),(local.y+decalHalf.y)/(2.0*max(decalHalf.y,0.001)));
-                float4 decalCol=SAMPLE_TEXTURE2D(_DecalTex,sampler_DecalTex,decalUV); float4 col=decalCol*_BaseColor; if(col.a<=_AlphaClip) discard; return col;
+                float4 decalCol=SAMPLE_TEXTURE2D(_DecalTex,sampler_DecalTex,decalUV); float4 col=decalCol; if(col.a<=_AlphaClip) discard; return col;
             }
             ENDHLSL
         }

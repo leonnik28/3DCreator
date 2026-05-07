@@ -78,8 +78,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _parts:
   - PartId: 0
-    DisplayName: Outline
-    TargetRenderer: {fileID: 0}
+    DisplayName: "\u0420\u0430\u043C\u043A\u0430"
+    TargetRenderer: {fileID: 6178186675368528546}
+    MaterialIndex: 0
+  - PartId: 1
+    DisplayName: "\u0411\u0443\u043C\u0430\u0433\u0430"
+    TargetRenderer: {fileID: 1547958463895835408}
     MaterialIndex: 0
 --- !u!114 &8415062850356259165
 MonoBehaviour:

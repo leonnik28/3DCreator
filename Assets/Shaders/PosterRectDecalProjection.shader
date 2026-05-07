@@ -17,6 +17,7 @@
         _FrontOnly ("Front Only (0/1)", Float) = 0
         _Curvature ("Curvature Amount", Range(0,1)) = 0
         _BaseColor ("Base Color", Color) = (1,1,1,1)
+        _SurfaceColor ("Surface Color", Color) = (1,1,1,1)
         _AlphaClip ("Alpha Clip Threshold", Range(0,1)) = 0.001
     }
 
@@ -52,6 +53,7 @@
             float _FrontOnly;
             float _Curvature;
             float4 _BaseColor;
+            float4 _SurfaceColor;
             float _AlphaClip;
 
             struct Attributes { float4 positionOS:POSITION; float3 normalOS:NORMAL; };
@@ -95,7 +97,7 @@
                 float2 canvasUV = float2(uNorm * 0.5 + 0.5, vNorm * 0.5 + 0.5);
 
                 if (canvasUV.x < 0.0 || canvasUV.x > 1.0 || canvasUV.y < 0.0 || canvasUV.y > 1.0)
-                    return _BaseColor;
+                    return _SurfaceColor;
 
                 float3 nAxis = AxisVector(_PlaneAxisN);
                 float3 uAxis = AxisVector(_PlaneAxisU);
@@ -103,11 +105,11 @@
                 float3 curvedOut = normalize(nAxis + _Curvature * (uNorm * uAxis + vNorm * vAxis * 0.35));
 
                 if (_FrontOnly > 0.5 && dot(normalOS, curvedOut) <= 0.0)
-                    return _BaseColor;
+                    return _SurfaceColor;
 
                 float depthAllowance = max(_Curvature * 0.05, 0.01);
                 if (abs(nLocal - _PlaneOffset) > depthAllowance)
-                    return _BaseColor;
+                    return _SurfaceColor;
 
                 float2 decalCenter = _DecalRect.xy;
                 float2 decalHalf = _DecalRect.zw;
@@ -118,7 +120,7 @@
                 float2 local = float2(toPoint.x * c + toPoint.y * s, -toPoint.x * s + toPoint.y * c);
 
                 if (abs(local.x) > decalHalf.x || abs(local.y) > decalHalf.y)
-                    return _BaseColor;
+                    return _SurfaceColor;
 
                 float2 mirroredLocal = local;
                 if (_MirrorU > 0.5) mirroredLocal.x = -mirroredLocal.x;
@@ -130,7 +132,7 @@
                 );
 
                 float4 decalCol = SAMPLE_TEXTURE2D(_DecalTex, sampler_DecalTex, finalUV);
-                float4 col = decalCol * _BaseColor;
+                float4 col = decalCol;
                 if (col.a <= _AlphaClip)
                     discard;
 
