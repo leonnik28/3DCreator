@@ -102,6 +102,12 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Metallic: 0
+    - _NoPrintAtEdges: 1
+    - _NoPrintAtEdgesV: 1
+    - _NoPrintCenterU: 0
+    - _NoPrintCenterV: 0.5
+    - _NoPrintHalfU: 0
+    - _NoPrintHalfV: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _PlaneAxisN: 2
@@ -127,6 +133,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _PlaneCenterOS: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SurfaceColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &2078611640552596103
 MonoBehaviour:

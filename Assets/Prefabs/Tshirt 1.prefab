@@ -339,14 +339,18 @@ MonoBehaviour:
     TargetRenderer: {fileID: 3460199057729246437}
     MaterialIndex: 0
   - PartId: 2
-    DisplayName: "\u0412\u043E\u0440\u043E\u0442\u043D\u0438\u043A"
+    DisplayName: "\u0412\u043E\u0440\u043E\u0442\u043D\u0438\u043A \u0441\u043F\u0435\u0440\u0435\u0434\u0438"
     TargetRenderer: {fileID: 3860041100607340756}
     MaterialIndex: 0
   - PartId: 3
+    DisplayName: "\u0412\u043E\u0440\u043E\u0442\u043D\u0438\u043A \u0441\u0437\u0430\u0434\u0438"
+    TargetRenderer: {fileID: 217713243868326817}
+    MaterialIndex: 0
+  - PartId: 4
     DisplayName: "\u041B\u0435\u0432\u044B\u0439 \u0440\u0443\u043A\u0430\u0432"
     TargetRenderer: {fileID: 5362525779567506242}
     MaterialIndex: 0
-  - PartId: 4
+  - PartId: 5
     DisplayName: "\u041F\u0440\u0430\u0432\u044B\u0439 \u0440\u0443\u043A\u0430\u0432"
     TargetRenderer: {fileID: 4643812805324091064}
     MaterialIndex: 0
