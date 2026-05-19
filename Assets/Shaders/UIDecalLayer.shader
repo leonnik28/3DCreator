@@ -81,7 +81,7 @@ Shader "UI/UIDecalLayer"
             float4 _Color;
             float4 _OutlineColor;
             float4 _DimColor;
-            float _Selected;  // Это должно соответствовать имени в Properties
+            float _Selected;  
             float _OutlineWidth;
             
             float4 _TextureSampleAdd;

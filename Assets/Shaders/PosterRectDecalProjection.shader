@@ -47,7 +47,6 @@
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_fog
 
-            // Важен порядок подключения библиотек
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
@@ -125,7 +124,6 @@
 
             half4 frag(Varyings IN) : SV_Target
             {
-                // 1. Расчет проекции декали
                 float3 pos = IN.positionOS;
                 float3 normalOS = TransformWorldToObjectNormal(IN.normalWS);
                 float3 center = _PlaneCenterOS.xyz;
@@ -183,7 +181,6 @@
                     }
                 }
 
-                // 2. Настройка данных для PBR освещения
                 InputData inputData = (InputData)0;
                 inputData.positionWS = IN.positionWS;
                 inputData.normalWS = normalize(IN.normalWS);
@@ -191,7 +188,6 @@
                 inputData.shadowCoord = IN.shadowCoord;
                 inputData.fogCoord = IN.fogFactor;
                 
-                // Простейший расчет GI (освещенность в тенях)
                 #if defined(LIGHTMAP_ON)
                     inputData.bakedGI = SampleLightmap(float2(0,0), float2(0,0), inputData.normalWS);
                 #else
@@ -201,17 +197,15 @@
                 SurfaceData surfaceData = (SurfaceData)0;
                 surfaceData.albedo = finalAlbedo.rgb;
                 surfaceData.metallic = _Metallic;
-                surfaceData.specular = half3(0, 0, 0); // Используем металлик
+                surfaceData.specular = half3(0, 0, 0); 
                 surfaceData.smoothness = _Smoothness;
                 surfaceData.occlusion = 1.0;
                 surfaceData.alpha = finalAlbedo.a;
                 surfaceData.emission = 0.0;
                 surfaceData.normalTS = half3(0, 0, 1);
 
-                // 3. Вызов финального освещения (UniversalFragmentPBR более стабилен)
                 half4 finalColor = UniversalFragmentPBR(inputData, surfaceData);
                 
-                // 4. Применяем туман
                 finalColor.rgb = MixFog(finalColor.rgb, IN.fogFactor);
                 
                 return finalColor;
@@ -219,7 +213,6 @@
             ENDHLSL
         }
 
-        // Проход для теней (ShadowCaster)
         UsePass "Universal Render Pipeline/Lit/ShadowCaster"
     }
 }

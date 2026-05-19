@@ -4,9 +4,6 @@ using PreviewSystem.Interfaces;
 
 namespace PreviewSystem.Strategies
 {
-    /// <summary>
-    /// Стратегия сортировки слоёв по времени создания
-    /// </summary>
     public class TimeBasedLayerOrderStrategy : ILayerOrderStrategy
     {
         public void ApplyOrder(IEnumerable<IDecalLayer> layers)

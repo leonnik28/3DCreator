@@ -4,9 +4,6 @@ using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 
-/// <summary>
-/// UI выбора модели: горизонтальный скролл с превью.
-/// </summary>
 public class UIModelSelector : MonoBehaviour
 {
     [Header("References")]
@@ -55,7 +52,6 @@ public class UIModelSelector : MonoBehaviour
         _modelManager.OnModelChanged += OnModelChanged;
         UpdateSelectionVisual();
 
-        // После первого кадра лейаут и ScrollRect стабилизируются (иначе content часто остаётся по ширине viewport).
         yield return null;
         ApplyContentWidthFromChildren();
         Canvas.ForceUpdateCanvases();
@@ -72,9 +68,6 @@ public class UIModelSelector : MonoBehaviour
             _modelManager.OnModelChanged -= OnModelChanged;
     }
 
-    /// <summary>
-    /// Content часто вешают прямо на панель без Viewport/Mask — превью уезжают за край. Собираем ScrollRect + RectMask2D.
-    /// </summary>
     private void EnsureHorizontalScrollArea()
     {
         if (_content == null) return;
@@ -89,7 +82,6 @@ public class UIModelSelector : MonoBehaviour
 
         bool usePlacementSlot = _scrollPlacementRoot != null;
 
-        // Раньше подгоняли ширину родителя _content — для отдельного Placement это ломает растягивающиеся RectTransform и смещает UI.
         if (!usePlacementSlot && panelRt.rect.width < 240f)
             panelRt.sizeDelta = new Vector2(Mathf.Max(panelRt.sizeDelta.x, 480f), Mathf.Max(panelRt.sizeDelta.y, 128f));
 
@@ -97,7 +89,6 @@ public class UIModelSelector : MonoBehaviour
         var scrollRt = scrollGo.GetComponent<RectTransform>();
         scrollRt.SetParent(panelRt, false);
 
-        // Индекс sibling от _content брался из другого родителя — при Placement скролл оказывался не там / сбоку.
         if (usePlacementSlot)
             scrollRt.SetAsLastSibling();
         else
@@ -166,8 +157,6 @@ public class UIModelSelector : MonoBehaviour
         hlg.childForceExpandWidth = false;
         hlg.childForceExpandHeight = false;
 
-        // ContentSizeFitter + HorizontalLayoutGroup на одном Rect часто даёт ширину = viewport → видна одна карточка.
-        // Ширину считаем вручную в ApplyContentWidthFromChildren после спавна элементов.
         var fitter = _content.GetComponent<ContentSizeFitter>();
         if (fitter != null)
             Destroy(fitter);
@@ -229,7 +218,6 @@ public class UIModelSelector : MonoBehaviour
             if (le.preferredWidth <= 0) le.preferredWidth = 96f;
             if (le.preferredHeight <= 0) le.preferredHeight = 96f;
 
-            // Префаб с stretch-якорями ломает горизонтальный ряд: элементы накладываются / занимают всю ширину content.
             var itemRt = go.GetComponent<RectTransform>();
             if (itemRt != null)
             {

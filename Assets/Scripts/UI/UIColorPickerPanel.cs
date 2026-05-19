@@ -3,9 +3,6 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 
-/// <summary>
-/// UI выбора части модели и цвета для неё.
-/// </summary>
 public class UIColorPickerPanel : MonoBehaviour
 {
     [Header("References")]
@@ -44,8 +41,6 @@ public class UIColorPickerPanel : MonoBehaviour
         EnsureApplyButton();
         HookApplyButtonIfNeeded();
         RefreshParts();
-        // Модель спавнится в Awake, а config в ModelColorizer собирается в Start.
-        // Поэтому делаем ещё один Refresh на следующий кадр.
         StartCoroutine(RefreshPartsNextFrame());
     }
 
@@ -70,9 +65,6 @@ public class UIColorPickerPanel : MonoBehaviour
 
     private void OnModelChanged(GameObject model, int index)
     {
-        // Важный момент: ModelColorizer обновляет конфиг частей в своём обработчике OnModelChanged.
-        // Если мы пересоберём UI сразу, можем прочитать "старый" конфиг.
-        // Поэтому делаем Refresh на следующий кадр.
         StartCoroutine(RefreshPartsNextFrame());
     }
 
@@ -118,7 +110,6 @@ public class UIColorPickerPanel : MonoBehaviour
             if (text != null)
                 text.text = string.IsNullOrEmpty(entry.DisplayName) ? entry.PartId ?? $"Part {i}" : entry.DisplayName;
 
-            // Визуальный индикатор выбранной части: обводка вокруг Image или текста.
             Outline outline = btnObj.GetComponent<Outline>() ?? btnObj.GetComponentInChildren<Outline>();
             if (outline == null)
             {
@@ -141,7 +132,6 @@ public class UIColorPickerPanel : MonoBehaviour
 
         SetApplyButtonInteractable(_selectedPartIndex >= 0);
 
-        // Чтобы было сразу понятно, какая часть выбрана.
         if (config.PartCount > 0)
             SelectPart(0);
     }
@@ -188,7 +178,7 @@ public class UIColorPickerPanel : MonoBehaviour
             {
                 _pendingColor = c;
                 if (_colorPicker != null)
-                    _colorPicker.SetColor(c); // только обновляет UI-предпросмотр
+                    _colorPicker.SetColor(c); 
                 SetApplyButtonInteractable(_selectedPartIndex >= 0);
             });
         }
@@ -218,7 +208,6 @@ public class UIColorPickerPanel : MonoBehaviour
                     return;
                 }
 
-                // Fallback: берём цвет из sharedMaterial по MaterialIndex (если ещё не было Apply).
                 var mats = entry.TargetRenderer.sharedMaterials;
                 int matIndex = entry.MaterialIndex >= 0 ? entry.MaterialIndex : 0;
                 if (mats != null && matIndex >= 0 && matIndex < mats.Length)
@@ -249,7 +238,6 @@ public class UIColorPickerPanel : MonoBehaviour
     private void OnColorChanged(Color color)
     {
         _pendingColor = color;
-        // Применяем цвет только по нажатию кнопки Apply.
         SetApplyButtonInteractable(_selectedPartIndex >= 0);
     }
 
@@ -270,7 +258,6 @@ public class UIColorPickerPanel : MonoBehaviour
             return;
         }
 
-        // Создаём кнопку на лету, если не настроена в сцене.
         var panelRt = GetComponent<RectTransform>();
         if (panelRt == null)
             return;
@@ -302,15 +289,12 @@ public class UIColorPickerPanel : MonoBehaviour
         tmp.raycastTarget = false;
         if (tmp.font == null)
         {
-            // Подхватываем один из стандартных шрифтов TMP из папки Resources проекта.
-            // Если не найден — Unity оставит дефолт, и кнопка может отображать только фон/бордер.
             tmp.font = Resources.Load<TMPro.TMP_FontAsset>("Fonts & Materials/LiberationSans SDF - Fallback");
             if (tmp.font != null)
                 tmp.fontSize = 18;
         }
 
         _applyColorButton = btnGo.GetComponent<Button>();
-        // Гарантируем, что кнопка знает, какое графическое полотно подсвечивать/использовать.
         _applyColorButton.targetGraphic = img;
         HookApplyButtonIfNeeded();
 

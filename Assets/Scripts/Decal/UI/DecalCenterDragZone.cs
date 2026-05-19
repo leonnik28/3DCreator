@@ -3,9 +3,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Fotocentr.Core;
 
-/// <summary>
-/// Прозрачная зона в центре изображения для перетаскивания. Делегирует в IDragTarget.
-/// </summary>
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(Image))]
 public class DecalCenterDragZone : MonoBehaviour, IBeginDragHandler, IDragHandler
@@ -24,8 +21,6 @@ public class DecalCenterDragZone : MonoBehaviour, IBeginDragHandler, IDragHandle
         if (img != null)
         {
             img.color = new Color(1, 1, 1, 0.001f);
-            // UIDecalLayer already handles click/drag input. This overlay should not block
-            // clicks that need to pass through to other visible decal layers.
             img.raycastTarget = false;
         }
 

@@ -202,7 +202,6 @@ Shader "Universal Render Pipeline/ShopperRectDecalLit"
             ENDHLSL
         }
 
-        // Позволяет шопперу отбрасывать тени
         UsePass "Universal Render Pipeline/Lit/ShadowCaster"
     }
 }

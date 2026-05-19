@@ -3,9 +3,6 @@ using PreviewSystem.Interfaces;
 
 namespace PreviewSystem.Factories
 {
-    /// <summary>
-    /// Фабрика для создания слоёв декалей
-    /// </summary>
     public class DecalLayerFactory : IDecalLayerFactory
     {
         private readonly GameObject _layerPrefab;

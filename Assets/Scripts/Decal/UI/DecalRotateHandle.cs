@@ -2,9 +2,6 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-/// <summary>
-/// Ручка поворота над изображением (как в редакторах). Поворот по углу от центра.
-/// </summary>
 [RequireComponent(typeof(Image))]
 public class DecalRotateHandle : MonoBehaviour, IBeginDragHandler, IDragHandler, IPointerEnterHandler, IPointerExitHandler
 {

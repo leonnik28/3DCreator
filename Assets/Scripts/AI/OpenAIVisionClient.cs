@@ -9,10 +9,6 @@ using UnityEngine.Networking;
 
 namespace Fotocentr.AI
 {
-    /// <summary>
-    /// OpenAI-compatible Vision chat client.
-    /// Подходит не только для OpenAI: многие провайдеры держат OpenAI-compatible формат /v1/chat/completions.
-    /// </summary>
     public class OpenAIVisionClient
     {
         private readonly MonoBehaviour _runner;
@@ -135,8 +131,6 @@ namespace Fotocentr.AI
             string base64 = Convert.ToBase64String(imagePngBytes);
             string dataUrl = "data:image/png;base64," + base64;
 
-            // OpenAI / OpenAI-compatible формат:
-            // messages: [{ role: "system", content: "..." }, { role:"user", content:[ {type:"text"...}, {type:"image_url"...} ] }]
             string json = BuildPayloadJson(prompt, systemPrompt, model, dataUrl);
 
             using var req = new UnityWebRequest(endpointUrl, "POST");
@@ -145,7 +139,6 @@ namespace Fotocentr.AI
 
             req.SetRequestHeader("Content-Type", "application/json");
 
-            // OpenAI compatible authorization header.
             req.SetRequestHeader("Authorization", "Bearer " + apiKey.Trim());
 
             yield return req.SendWebRequest();
@@ -199,8 +192,6 @@ namespace Fotocentr.AI
             Action<string> onSuccess,
             Action<string> onError)
         {
-            // OpenAI / OpenAI-compatible формат:
-            // messages: [{ role: "system", content: "..." }, { role:"user", content: "..." }]
             string json = BuildTextPayloadJson(prompt, systemPrompt, model);
 
             using var req = new UnityWebRequest(endpointUrl, "POST");
@@ -283,7 +274,6 @@ namespace Fotocentr.AI
                 messages = "[" + systemMessage + "," + userMessage + "]";
             }
 
-            // temperature: число, не строка.
             return "{"
                    + "\"model\":\"" + escModel + "\","
                    + "\"temperature\":0.2,"
@@ -327,7 +317,6 @@ namespace Fotocentr.AI
         {
             if (s == null) return string.Empty;
 
-            // Базовое экранирование для корректного JSON.
             var sb = new StringBuilder(s.Length + 16);
             for (int i = 0; i < s.Length; i++)
             {
@@ -352,8 +341,6 @@ namespace Fotocentr.AI
 
         private static string ExtractContent(string responseText)
         {
-            // Unity 2021.x иногда урезает System.Text.Json (например, JsonDocument может быть недоступен),
-            // поэтому парсим через DataContractJsonSerializer.
             try
             {
                 var bytes = Encoding.UTF8.GetBytes(responseText);
@@ -373,11 +360,8 @@ namespace Fotocentr.AI
             }
             catch
             {
-                // fall through to a very small fallback below.
             }
 
-            // Fallback: более надёжное извлечение JSON string значения (учитывает экранирование).
-            // Ограничиваем поиск областью choices, чтобы не цеплять другие поля "content".
             try
             {
                 int choicesIdx = responseText.IndexOf("\"choices\"", StringComparison.OrdinalIgnoreCase);
@@ -393,14 +377,12 @@ namespace Fotocentr.AI
                 if (!string.IsNullOrWhiteSpace(text))
                     return text;
 
-                // OpenRouter/провайдер может вернуть {"error": {"message": "..."}}
                 string errorMessage = TryExtractErrorMessage(responseText);
                 if (!string.IsNullOrWhiteSpace(errorMessage))
                     return errorMessage;
             }
             catch
             {
-                // ignore
             }
 
             string snippet = TrimForLog(responseText, 4000);
@@ -439,8 +421,7 @@ namespace Fotocentr.AI
             if (i >= json.Length || json[i] != '"')
                 return null;
 
-            // Parse JSON string starting after the opening quote.
-            i++; // skip opening quote
+            i++;
             var sb = new StringBuilder(128);
 
             while (i < json.Length)
@@ -448,7 +429,6 @@ namespace Fotocentr.AI
                 char c = json[i];
                 if (c == '"')
                 {
-                    // closing quote (not escaped)
                     return sb.ToString();
                 }
 
@@ -476,7 +456,6 @@ namespace Fotocentr.AI
                             break;
                         }
                         default:
-                            // Unknown escape sequence, best-effort: append char as-is.
                             sb.Append(esc);
                             i += 2;
                             break;

@@ -2,9 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// UI панель: анимация модели (вкл/выкл, ось, скорость) + скриншот и запись видео.
-/// </summary>
 public class UIAnimationCapturePanel : MonoBehaviour
 {
     [Header("Animation")]

@@ -3,9 +3,6 @@ using PreviewSystem.Interfaces;
 
 namespace PreviewSystem.Visual
 {
-    /// <summary>
-    /// Реализация параметров визуального оформления
-    /// </summary>
     [System.Serializable]
     public class LayerVisualParameters : ILayerVisualParameters
     {

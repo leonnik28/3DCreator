@@ -2,9 +2,6 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using DecalSystem.CornerResize;
 
-/// <summary>
-/// Угловая ручка для изменения размера изображения декали.
-/// </summary>
 public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
     public enum CornerType { TopLeft, TopRight, BottomLeft, BottomRight }
@@ -42,7 +39,6 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
         _dragStartPosition = _targetRect.anchoredPosition;
         _dragStartRotation = _targetRect.eulerAngles.z;
 
-        // Определяем эффективный угол с учетом текущего поворота
         CornerType effectiveCorner = GetEffectiveCornerFromRotation();
         _strategy = CornerResizeStrategyFactory.GetStrategy(ToResizeCornerType(effectiveCorner));
     }
@@ -51,7 +47,6 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
     {
         if (_targetRect == null || _strategy == null) return;
 
-        // Конвертируем экранные координаты в локальные координаты относительно родителя
         RectTransform parentRect = _targetRect.parent as RectTransform;
         Camera cam = eventData.pressEventCamera;
 
@@ -61,11 +56,8 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
             parentRect, _dragStartPoint, cam, out Vector2 startLocalPos)) return;
 
-        // Вычисляем дельту в локальном пространстве родителя
         Vector2 localDelta = currentLocalPos - startLocalPos;
 
-        // Поворачиваем дельту обратно на угол поворота объекта
-        // Это ключевой момент - мы "отменяем" поворот, чтобы дельта была в локальном пространстве объекта
         float rotationRad = -_dragStartRotation * Mathf.Deg2Rad;
         float cos = Mathf.Cos(rotationRad);
         float sin = Mathf.Sin(rotationRad);
@@ -75,23 +67,17 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
             localDelta.x * sin + localDelta.y * cos
         );
 
-        // Получаем изменение размера от стратегии, но с учетом знаков для каждого угла
         Vector2 sizeDelta = GetSizeDeltaForCorner(rotatedDelta, _cornerType);
 
-        // Применяем чувствительность
         sizeDelta *= _resizeSensitivity;
 
-        // Вычисляем новый размер
         Vector2 newSize = _dragStartSize + sizeDelta;
         newSize = ClampAndApplyAspectRatio(newSize);
 
-        // Вычисляем фактическое изменение размера
         Vector2 actualSizeDelta = newSize - _dragStartSize;
 
-        // Вычисляем смещение позиции для сохранения противоположного угла на месте
         Vector2 positionDelta = GetPositionDeltaForCorner(actualSizeDelta, _cornerType, _dragStartRotation);
 
-        // Применяем изменения
         _targetRect.sizeDelta = newSize;
         _targetRect.anchoredPosition = _dragStartPosition + positionDelta;
 
@@ -111,7 +97,6 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     private Vector2 GetSizeDeltaForCorner(Vector2 delta, CornerType corner)
     {
-        // Для каждого угла определяем, как движение мыши влияет на размер
         switch (corner)
         {
             case CornerType.TopLeft:
@@ -129,7 +114,6 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     private Vector2 GetPositionDeltaForCorner(Vector2 sizeDelta, CornerType corner, float rotation)
     {
-        // Вычисляем смещение позиции, чтобы противоположный угол оставался на месте
         Vector2 posDelta = Vector2.zero;
 
         switch (corner)
@@ -148,7 +132,6 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
                 break;
         }
 
-        // Поворачиваем смещение позиции обратно с учетом поворота объекта
         float rotationRad = rotation * Mathf.Deg2Rad;
         float cos = Mathf.Cos(rotationRad);
         float sin = Mathf.Sin(rotationRad);
@@ -166,7 +149,6 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
         float z = _targetRect.eulerAngles.z;
         int rotations = Mathf.RoundToInt(z / 90f) % 4;
 
-        // Маппинг углов при повороте на 90, 180, 270 градусов
         return (_cornerType, rotations) switch
         {
             (CornerType.TopLeft, 1) => CornerType.TopRight,
@@ -217,15 +199,12 @@ public class DecalCornerHandle : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     private float GetEffectiveMinSize()
     {
-        // Ручки ~24px (см. TransformControlsController.HandleSize). Чтобы ручки оставались видимыми,
-        // ставим минимальный размер немного больше одной ручки по ширине/высоте.
         const float autoMin = 32f;
         return _minSize > 0f ? _minSize : autoMin;
     }
 
     private float GetEffectiveMaxSize()
     {
-        // 0 (или меньше) = без верхнего лимита.
         return _maxSize > 0f ? _maxSize : float.PositiveInfinity;
     }
 

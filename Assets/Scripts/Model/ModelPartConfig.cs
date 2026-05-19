@@ -1,9 +1,6 @@
 using UnityEngine;
 using System;
 
-/// <summary>
-/// Конфигурация частей модели для покраски (например: ободок, внутренняя часть, ручка кружки).
-/// </summary>
 [Serializable]
 public class ModelPartEntry
 {
@@ -14,9 +11,6 @@ public class ModelPartEntry
     public int MaterialIndex = -1;
 }
 
-/// <summary>
-/// Компонент на модели: определяет части, которые можно красить.
-/// </summary>
 public class ModelPartConfig : MonoBehaviour
 {
     [SerializeField] private ModelPartEntry[] _parts = new ModelPartEntry[0];
@@ -39,9 +33,6 @@ public class ModelPartConfig : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Создать одну часть по умолчанию (вся модель).
-    /// </summary>
     public void SetupDefaultPart(Renderer renderer)
     {
         _parts = new ModelPartEntry[]

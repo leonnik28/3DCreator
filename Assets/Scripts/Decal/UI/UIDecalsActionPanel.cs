@@ -3,9 +3,6 @@ using UnityEngine.UI;
 using System;
 using PreviewSystem.Interfaces;
 
-/// <summary>
-/// ������ �������� � �������� (�������� ���, ������� ���������, ������)
-/// </summary>
 public class UIDecalsActionPanel : UIPanelBase
 {
     [Header("Buttons")]
@@ -73,18 +70,12 @@ public class UIDecalsActionPanel : UIPanelBase
             _generateDescriptionButton.onClick.AddListener(() => OnGenerateDescriptionClicked?.Invoke());
     }
 
-    /// <summary>
-    /// ������������� � �������� ��������
-    /// </summary>
     public void Initialize(IDecalRemovalService removalService)
     {
         _removalService = removalService ?? throw new ArgumentNullException(nameof(removalService));
         UpdateDeleteButtonState();
     }
 
-    /// <summary>
-    /// ���������� ��������� ������ ��������
-    /// </summary>
     public void UpdateDeleteButtonState()
     {
         if (_deleteSelectedButton == null) return;
@@ -93,7 +84,6 @@ public class UIDecalsActionPanel : UIPanelBase
 
         _deleteSelectedButton.interactable = canDelete;
 
-        // �����������: ������ ������ � ����������� �� ���������
         if (_deleteButtonIcon != null)
             _deleteButtonIcon.SetActive(canDelete);
 
@@ -101,9 +91,6 @@ public class UIDecalsActionPanel : UIPanelBase
             _deleteButtonDisabledIcon.SetActive(!canDelete);
     }
 
-    /// <summary>
-    /// ����� ��������� ������
-    /// </summary>
     public void ResetButtons()
     {
         if (_clearAllButton != null)
@@ -118,9 +105,6 @@ public class UIDecalsActionPanel : UIPanelBase
         UpdateDeleteButtonState();
     }
 
-    /// <summary>
-    /// ���������� ���� ������ (��������, �� ����� ��������)
-    /// </summary>
     public void SetButtonsInteractable(bool interactable)
     {
         if (_clearAllButton != null)
@@ -139,9 +123,6 @@ public class UIDecalsActionPanel : UIPanelBase
             _generateDescriptionButton.interactable = interactable;
     }
 
-    /// <summary>
-    /// ����������/�������� ������
-    /// </summary>
     public override void Show()
     {
         base.Show();

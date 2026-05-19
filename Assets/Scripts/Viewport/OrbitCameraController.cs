@@ -1,9 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-/// <summary>
-/// Камера вращается вокруг цели при перетаскивании мышью.
-/// </summary>
 public class OrbitCameraController : MonoBehaviour
 {
     [Header("Target")]

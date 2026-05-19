@@ -2,11 +2,6 @@ using UnityEngine;
 
 namespace Fotocentr.AI
 {
-    /// <summary>
-    /// Хранилище настроек AI для сцены: ключ, endpoint, model и system prompt.
-    /// Панели вроде <see cref="AIVisionPromptPanel"/> используют этот компонент,
-    /// чтобы API key вводился один раз.
-    /// </summary>
     public class AIVisionApiKeyProvider : MonoBehaviour
     {
         [Header("Secrets")]
@@ -15,8 +10,6 @@ namespace Fotocentr.AI
         [Header("OpenAI-compatible Endpoint")]
         [SerializeField] private string _endpointUrl = "https://api.mistral.ai/v1/chat/completions";
 
-        // Для vision используем Pixtral (поддерживает image_url в messages.content).
-        // Начни с 12B (обычно дешевле/быстрее), при необходимости меняй на large.
         [SerializeField] private string _model = "pixtral-12b-2409";
 
         [Header("Retry / Fallback (optional)")]

@@ -77,15 +77,12 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
 
     private void SubscribeToEvents()
     {
-        // Preview events
         if (_previewController != null)
             _previewController.OnDecalLayerClicked += OnDecalLayerClicked;
 
-        // Image loader events
         if (_imageLoader != null)
             _imageLoader.OnImageLoaded += OnImageLoaded;
 
-        // Action panel events
         if (_actionPanel != null)
         {
             _actionPanel.OnDeleteSelectedClicked += OnDeleteSelectedClicked;
@@ -98,17 +95,14 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
         if (_descriptionGenerationPanel != null)
             _descriptionGenerationPanel.OnCloseRequested += OnDescriptionGenerationCloseRequested;
 
-        // Decal manager events
         if (_decalManager != null)
         {
             _decalManager.OnDecalCreated += OnDecalCreated;
             _decalManager.OnDecalSelected += OnDecalSelected;
             _decalManager.OnDecalDeleted += OnDecalDeleted;
-            _decalManager.OnDecalTransformChanged += OnDecalTransformChanged;
         }
     }
 
-    // ??????????? ??? ?????? ????????
     private void OnDeleteSelectedClicked()
     {
         _removalService?.DeleteSelected();
@@ -186,7 +180,7 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
     {
         SetActiveDecal(decal);
         _previewController.HighlightSelected(decal);
-        _actionPanel?.UpdateDeleteButtonState(); // ????????? ????????? ??????
+        _actionPanel?.UpdateDeleteButtonState();
     }
 
     private void OnDecalDeleted(DecalController decal)
@@ -198,12 +192,6 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
 
         _previewController.RemoveLayer(decal);
         _actionPanel?.UpdateDeleteButtonState();
-    }
-
-    private void OnDecalTransformChanged(DecalController decal)
-    {
-        // ?? ?????????????? 2D ?? 3D ? ???????? ?????? ??? ?????????????? ??? 2D.
-        // UpdateLayerPosition ??????? ?? layer.UpdateTransform ? ??????? ?? rotation/position.
     }
 
     public void SetActiveDecal(DecalController decal)
@@ -279,7 +267,6 @@ public class DecalEditPanel : MonoBehaviour, IDecalEditor, IDecalEditorDependenc
             _decalManager.OnDecalCreated -= OnDecalCreated;
             _decalManager.OnDecalSelected -= OnDecalSelected;
             _decalManager.OnDecalDeleted -= OnDecalDeleted;
-            _decalManager.OnDecalTransformChanged -= OnDecalTransformChanged;
         }
     }
 

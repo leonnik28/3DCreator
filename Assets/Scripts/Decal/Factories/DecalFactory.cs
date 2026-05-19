@@ -1,8 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Фабрика для создания и уничтожения декалей.
-/// </summary>
 public class DecalFactory : MonoBehaviour
 {
     [SerializeField] private GameObject _decalPrefab;

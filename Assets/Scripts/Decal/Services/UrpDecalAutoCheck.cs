@@ -75,12 +75,10 @@ namespace Fotocentr.Decals.Services
 
             var t = rp.GetType();
 
-            // 1) Public property in some URP versions
             var prop = t.GetProperty("scriptableRendererData", BindingFlags.Instance | BindingFlags.Public);
             if (prop != null)
                 return prop.GetValue(rp) as ScriptableRendererData;
 
-            // 2) Renderer data list (serialized field) + default renderer index
             var listField =
                 t.GetField("m_RendererDataList", BindingFlags.Instance | BindingFlags.NonPublic) ??
                 t.GetField("m_RendererDataList", BindingFlags.Instance | BindingFlags.Public);
@@ -88,7 +86,6 @@ namespace Fotocentr.Decals.Services
             var list = listField?.GetValue(rp) as ScriptableRendererData[];
             if (list == null || list.Length == 0)
             {
-                // Some URP versions expose rendererDataList as a property
                 var listProp = t.GetProperty("rendererDataList", BindingFlags.Instance | BindingFlags.Public);
                 list = listProp?.GetValue(rp) as ScriptableRendererData[];
             }

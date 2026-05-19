@@ -103,7 +103,7 @@ public class TransformControlsController : MonoBehaviour
         handlesRect.offsetMax = Vector2.zero;
 
         float hw = HandleSize * 0.5f;
-        float edgeInset = hw * 0.4f; // было hw, стало в 2 раза ближе к краю
+        float edgeInset = hw * 0.4f;
 
         PositionHandle(_topLeftHandle, 0, 1, edgeInset, -edgeInset);
         PositionHandle(_topRightHandle, 1, 1, -edgeInset, -edgeInset);

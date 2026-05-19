@@ -2,9 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Простой выбор цвета через R,G,B слайдеры.
-/// </summary>
 public class ColorPicker : MonoBehaviour
 {
     [SerializeField] private Slider _rSlider;

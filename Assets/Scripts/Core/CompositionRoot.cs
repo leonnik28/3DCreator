@@ -3,11 +3,6 @@ using Fotocentr.Core;
 
 namespace Fotocentr.Core
 {
-    /// <summary>
-    /// Точка входа зависимостей. Собирает сервисы и предоставляет их потребителям.
-    /// Заменяет FindObjectOfType на явное связывание (Dependency Injection).
-    /// Добавьте на сцену и назначьте DecalEditPanel в Consumers.
-    /// </summary>
     [DefaultExecutionOrder(-100)]
     public class CompositionRoot : MonoBehaviour
     {

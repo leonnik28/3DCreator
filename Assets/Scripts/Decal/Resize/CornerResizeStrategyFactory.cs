@@ -2,9 +2,6 @@ using UnityEngine;
 
 namespace DecalSystem.CornerResize
 {
-    /// <summary>
-    /// Создаёт стратегию ресайза по типу угла.
-    /// </summary>
     public static class CornerResizeStrategyFactory
     {
         private static readonly ICornerResizeStrategy TopLeft = new TopLeftCornerStrategy();

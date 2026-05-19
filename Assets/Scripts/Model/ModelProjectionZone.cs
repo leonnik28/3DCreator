@@ -1,9 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Настраиваемая зона проекции на модели. Оставлена для совместимости с DecalTransformService,
-/// но больше не завязана на Unity Projector/DecalProjector.
-/// </summary>
 public class ModelProjectionZone : MonoBehaviour
 {
     [Tooltip("Размер зоны в мировых единицах (высота)")]

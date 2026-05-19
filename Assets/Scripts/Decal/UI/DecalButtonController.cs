@@ -33,13 +33,11 @@ public class DecalButtonController : MonoBehaviour, IPointerClickHandler
         {
             _previewImage.texture = Decal.GetTexture();
 
-            // Сохраняем пропорции изображения
             float aspectRatio = (float)Decal.GetTexture().width / Decal.GetTexture().height;
             var rectTransform = _previewImage.GetComponent<RectTransform>();
 
             if (rectTransform != null)
             {
-                // Подгоняем под размер контейнера с сохранением пропорций
                 FitImageToContainer(rectTransform, aspectRatio);
             }
         }
@@ -47,7 +45,6 @@ public class DecalButtonController : MonoBehaviour, IPointerClickHandler
 
     private void FitImageToContainer(RectTransform imageRect, float aspectRatio)
     {
-        // Получаем размер родительского контейнера
         var parent = imageRect.parent as RectTransform;
         if (parent == null) return;
 
@@ -57,12 +54,10 @@ public class DecalButtonController : MonoBehaviour, IPointerClickHandler
 
         if (aspectRatio > parentAspect)
         {
-            // Подгоняем по ширине
             imageRect.sizeDelta = new Vector2(parentWidth, parentWidth / aspectRatio);
         }
         else
         {
-            // Подгоняем по высоте
             imageRect.sizeDelta = new Vector2(parentHeight * aspectRatio, parentHeight);
         }
     }
@@ -87,13 +82,11 @@ public class DecalButtonController : MonoBehaviour, IPointerClickHandler
         OnClicked?.Invoke(this);
     }
 
-    // Обновить превью (если текстура изменилась)
     public void RefreshPreview()
     {
         UpdatePreview();
     }
 
-    // Обновить индекс (если порядок изменился)
     public void UpdateIndex(int newIndex)
     {
         _index = newIndex;

@@ -125,7 +125,6 @@ Shader "Universal Render Pipeline/TShirtRectDecalLit"
                 float uNorm = uLocal / max(_PlaneHalfU, 0.001);
                 float vNorm = vLocal / max(_PlaneHalfV, 0.001);
                 
-                // canvasUV из вашего кода
                 float2 canvasUV = float2(0.5 - uNorm * 0.5, vNorm * 0.5 + 0.5);
 
                 half4 finalAlbedo = _SurfaceColor;
@@ -189,7 +188,7 @@ Shader "Universal Render Pipeline/TShirtRectDecalLit"
                         half4 decalCol = SAMPLE_TEXTURE2D(_DecalTex, sampler_DecalTex, decalUV) * _BaseColor;
                         
                         if(decalCol.a <= _AlphaClip) 
-                            isDecal = false; // Если прозрачно, рисуем SurfaceColor
+                            isDecal = false; 
                         else
                             finalAlbedo = decalCol;
                     }
@@ -214,7 +213,7 @@ Shader "Universal Render Pipeline/TShirtRectDecalLit"
                 surfaceData.metallic = _Metallic;
                 surfaceData.smoothness = _Smoothness;
                 surfaceData.occlusion = 1.0;
-                surfaceData.alpha = 1.0; // Мы в Opaque очереди
+                surfaceData.alpha = 1.0;
 
                 half4 finalColor = UniversalFragmentPBR(inputData, surfaceData);
                 finalColor.rgb = MixFog(finalColor.rgb, IN.fogFactor);

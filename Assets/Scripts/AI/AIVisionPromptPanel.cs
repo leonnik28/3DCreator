@@ -10,9 +10,6 @@ using UnityEngine.EventSystems;
 
 namespace Fotocentr.AI
 {
-    /// <summary>
-    /// Панель: ввод задания + скриншот сцены -> запрос в AI -> вывод ответа (с кнопкой Copy).
-    /// </summary>
     public class AIVisionPromptPanel : UIPanelBase
     {
         [Header("UI")]
@@ -128,7 +125,6 @@ namespace Fotocentr.AI
             if (_includeScreenshotToggle == null)
                 return;
 
-            // Если toggle подключен, он должен управлять отправкой.
             _includeScreenshot = _includeScreenshotToggle.isOn;
             _includeScreenshotToggle.onValueChanged.AddListener(OnIncludeScreenshotToggled);
         }
@@ -304,8 +300,6 @@ namespace Fotocentr.AI
 
             Debug.Log("[AI] Send clicked. includeScreenshot=" + _includeScreenshot + ", endpoint=" + _credentialsProvider.EndpointUrl + ", model=" + _credentialsProvider.Model);
 
-            // Всегда добавляем стандартный префикс (который пользователь может менять),
-            // а также сохраняем его в JSON между сессиями.
             SaveSettingsFromUI();
             string standardPrompt = _standardPromptInput != null
                 ? (_standardPromptInput.text ?? "").Trim()
@@ -405,8 +399,6 @@ namespace Fotocentr.AI
                         float delay = _rateLimitBaseDelaySeconds * nextAttempt;
 
                         string nextModel = model;
-                        // При rate-limit попробуем уйти на fallback-модель (если она отличается),
-                        // чтобы не попадать в тот же upstream лимит.
                         if (attempt == 0 &&
                             !string.IsNullOrWhiteSpace(_credentialsProvider.FallbackModel) &&
                             !string.Equals(_credentialsProvider.FallbackModel, model, StringComparison.OrdinalIgnoreCase))
@@ -499,7 +491,6 @@ namespace Fotocentr.AI
                 if (pngBytes == null || pngBytes.Length == 0)
                     return null;
 
-                // Не спамим диском в релизе.
                 if (!Debug.isDebugBuild)
                     return null;
 

@@ -3,9 +3,6 @@ using PreviewSystem.Interfaces;
 
 namespace PreviewSystem.Visual
 {
-    /// <summary>
-    /// ��������� ����������� ���������� �� ������ �������
-    /// </summary>
     public class ShaderBasedVisualStrategy : IDecalLayerVisualStrategy
     {
         private static readonly int SelectedProperty = Shader.PropertyToID("_Selected");
@@ -37,7 +34,6 @@ namespace PreviewSystem.Visual
 
         public void Cleanup(IDecalLayer layer)
         {
-            // ������� ��� �������������
         }
     }
 

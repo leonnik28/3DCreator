@@ -2,9 +2,6 @@ using UnityEngine;
 
 namespace PreviewSystem.Interfaces
 {
-    /// <summary>
-    /// ��������� ���� ������ � UI
-    /// </summary>
     public interface IDecalLayer
     {
         DecalController SourceDecal { get; }
@@ -23,9 +20,6 @@ namespace PreviewSystem.Interfaces
         Transform transform { get; }
     }
 
-    /// <summary>
-    /// ��������� ����������� ���������� ����
-    /// </summary>
     public interface ILayerVisualParameters
     {
         Color OutlineColor { get; set; }

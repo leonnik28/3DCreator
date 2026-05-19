@@ -3,9 +3,6 @@ using PreviewSystem.Interfaces;
 
 namespace PreviewSystem.Services
 {
-    /// <summary>
-    /// Реализация сервиса удаления декалей
-    /// </summary>
     public class DecalRemovalService : IDecalRemovalService
     {
         private readonly DecalManager _decalManager;

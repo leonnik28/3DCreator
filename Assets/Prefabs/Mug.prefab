@@ -164,6 +164,10 @@ MonoBehaviour:
     DisplayName: "\u0420\u0443\u0447\u043A\u0430"
     TargetRenderer: {fileID: 4672420138868436106}
     MaterialIndex: 0
+  - PartId: 2
+    DisplayName: "\u041A\u0440\u0443\u0436\u043A\u0430"
+    TargetRenderer: {fileID: 2362690438376065672}
+    MaterialIndex: 0
 --- !u!114 &-6772411923385345556
 MonoBehaviour:
   m_ObjectHideFlags: 0

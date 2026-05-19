@@ -1,8 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Вращает 3D-объект по горизонтали или вертикали.
-/// </summary>
 public class ModelRotator : MonoBehaviour
 {
     public enum Axis { Horizontal, Vertical }

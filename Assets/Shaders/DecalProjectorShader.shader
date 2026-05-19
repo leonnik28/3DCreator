@@ -48,17 +48,14 @@ Shader "Projector/DecalProjector"
             
             fixed4 frag (v2f i) : SV_Target
             {
-                // Проецируем UV координаты
                 float2 uv = i.uv.xy / i.uv.w;
                 
-                // Обрезаем всё что выходит за пределы [0,1]
                 clip(uv - 0.01);
                 clip(1.01 - uv);
                 
                 fixed4 tex = tex2D(_MainTex, uv);
                 fixed4 res = tex * _Color;
                 
-                // Применяем falloff по краям
                 float falloff = 1 - length(uv - 0.5) * 2;
                 falloff = saturate(falloff / _Falloff);
                 res.a *= falloff;

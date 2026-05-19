@@ -2,10 +2,6 @@ using UnityEngine;
 
 namespace DecalSystem.CornerResize
 {
-    /// <summary>
-    /// Логика для левого верхнего угла.
-    /// Тянем вправо/вниз — уменьшаем; влево/вверх — увеличиваем.
-    /// </summary>
     public sealed class TopLeftCornerStrategy : ICornerResizeStrategy
     {
         public Vector2 GetSizeDeltaFromScreenDelta(Vector2 screenDelta)

@@ -1,9 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Применяет цвета к частям модели через MaterialPropertyBlock (без создания instance материалов).
-/// </summary>
 public class ModelColorizer : MonoBehaviour
 {
     [Header("References")]
@@ -60,8 +57,6 @@ public class ModelColorizer : MonoBehaviour
 
     public void SetPartColor(int partIndex, Color color)
     {
-        // На старте модель может появиться раньше, чем соберётся конфиг частей.
-        // Поэтому на всякий случай дёргаем RefreshConfig при отсутствии конфигурации.
         if (_currentConfig == null)
             RefreshConfig();
 
@@ -103,9 +98,6 @@ public class ModelColorizer : MonoBehaviour
                 }
             }
 
-            // Применяем блок к Renderer целиком.
-            // Для большинства случаев "часть" = отдельный Renderer, поэтому этого достаточно
-            // и надёжнее, чем SetPropertyBlock(..., materialIndex).
             entry.TargetRenderer.SetPropertyBlock(block, i);
         }
 

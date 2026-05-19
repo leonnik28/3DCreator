@@ -3,17 +3,13 @@ using System.Collections;
 using System.IO;
 using System.Text;
 using System;
-using Fotocentr.Core; // Убедитесь, что это пространство имен добавлено
+using Fotocentr.Core;
 
 #if UNITY_EDITOR
 using UnityEditor.Recorder;
 using UnityEditor.Recorder.Input;
 #endif
 
-/// <summary>
-/// Съёмка сцены: скриншот и видео.
-/// Реализует ISceneCapture для интеграции через CompositionRoot.
-/// </summary>
 public class SceneCaptureService : MonoBehaviour, ISceneCapture
 {
     [Header("References")]
@@ -53,7 +49,6 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
     private string _recorderOutputBasePath;
 #endif
 
-    // Реализация свойства из интерфейса ISceneCapture
     public bool IsRecording => _isRecording;
 
     private void Awake()
@@ -61,7 +56,6 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
         if (_captureCamera == null)
             _captureCamera = Camera.main;
 
-        // Кодек H.264 требует четных размеров
         _width = (_width / 2) * 2;
         _height = (_height / 2) * 2;
     }
@@ -73,8 +67,6 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
         if (!Directory.Exists(path)) Directory.CreateDirectory(path);
         return path;
     }
-
-    // --- Методы интерфейса ISceneCapture ---
 
     public void TakeScreenshot()
     {
@@ -127,8 +119,6 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
 
         Debug.Log($"Запись завершена. Файл: {_runtimeOutputMp4Path}");
     }
-
-    // --- Внутренняя логика (Корутины и захват) ---
 
     private IEnumerator CaptureScreenshotCoroutine(bool saveToDisk, Action<byte[]> onCaptured)
     {
@@ -276,7 +266,6 @@ public class SceneCaptureService : MonoBehaviour, ISceneCapture
 
     private void CaptureRuntimeFrameToPng()
     {
-        // Если ffmpeg не завелся, пишем просто картинки
         StartCoroutine(CaptureScreenshotCoroutine(true, null));
     }
 

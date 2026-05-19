@@ -3,9 +3,6 @@ using UnityEngine;
 
 namespace PreviewSystem.Interfaces
 {
-    /// <summary>
-    /// Интерфейс окна предпросмотра
-    /// </summary>
     public interface IPreviewWindow
     {
         event Action<DecalController> OnDecalLayerClicked;

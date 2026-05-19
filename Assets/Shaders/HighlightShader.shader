@@ -50,18 +50,14 @@ Shader "Custom/HighlightShader"
             {
                 fixed4 col = tex2D(_MainTex, i.uv);
                 
-                // Вычисляем расстояние до края текстуры
                 float2 edgeDist = min(i.uv, 1.0 - i.uv);
                 float minEdgeDist = min(edgeDist.x, edgeDist.y);
                 
-                // Создаем рамку там, где расстояние до края меньше ширины рамки
                 float isEdge = step(minEdgeDist, _HighlightWidth);
                 
-                // Плавное затухание рамки
                 float edgeFactor = smoothstep(0, _HighlightWidth, minEdgeDist);
                 edgeFactor = 1.0 - edgeFactor;
                 
-                // Смешиваем оригинальный цвет с цветом подсветки
                 float3 highlighted = lerp(col.rgb, _HighlightColor.rgb, edgeFactor * _HighlightIntensity);
                 
                 return fixed4(highlighted, col.a);

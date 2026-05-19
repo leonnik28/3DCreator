@@ -1,8 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// База данных моделей для выбора. ScriptableObject.
-/// </summary>
 [CreateAssetMenu(fileName = "ModelDatabase", menuName = "Fotocentr/Model Database")]
 public class ModelDatabase : ScriptableObject
 {

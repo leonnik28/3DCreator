@@ -1,10 +1,6 @@
 using UnityEngine;
 using System;
 
-/// <summary>
-/// Контроллер 3D-декали.
-/// Предпочтительно использует DecalProjector (URP/HDRP), но имеет fallback на legacy Projector.
-/// </summary>
 public class DecalController : MonoBehaviour
 {
     public event System.Action<DecalController> OnDeleted;

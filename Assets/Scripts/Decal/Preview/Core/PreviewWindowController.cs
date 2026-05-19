@@ -8,9 +8,6 @@ using PreviewSystem.Strategies;
 using PreviewSystem.Visual;
 using PreviewSystem.Factories;
 
-/// <summary>
-/// ���������� ���� ������������� �������
-/// </summary>
 public class PreviewWindowController : MonoBehaviour, IPreviewWindow, IVisualParametersProvider
 {
     [Header("UI Components")]

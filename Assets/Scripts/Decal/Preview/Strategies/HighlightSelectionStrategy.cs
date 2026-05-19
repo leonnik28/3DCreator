@@ -3,9 +3,6 @@ using PreviewSystem.Interfaces;
 
 namespace PreviewSystem.Strategies
 {
-    /// <summary>
-    /// Стратегия выделения слоя с подсветкой
-    /// </summary>
     public class HighlightSelectionStrategy : ISelectionStrategy
     {
         private readonly IDecalLayerVisualStrategy _visualStrategy;

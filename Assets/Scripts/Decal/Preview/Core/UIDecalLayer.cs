@@ -4,9 +4,6 @@ using UnityEngine.EventSystems;
 using PreviewSystem.Interfaces;
 using Fotocentr.Core;
 
-/// <summary>
-/// UI ���� ������ � ���������� ������ � ���������� ��������
-/// </summary>
 public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerDownHandler, IPointerClickHandler, IBeginDragHandler, IDragHandler, ICanvasRaycastFilter
 {
     [SerializeField] private RectTransform _layerRect;
@@ -143,7 +140,6 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerDow
         float value = selected ? 1f : 0f;
         _instanceMaterial.SetFloat(SelectedProperty, value);
 
-        // �������������� ����������
         _layerImage.enabled = false;
         _layerImage.enabled = true;
     }
@@ -187,7 +183,6 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerDow
         }
         catch (UnityException)
         {
-            // For non-readable runtime textures we keep the old behavior instead of breaking input.
             return true;
         }
     }
@@ -221,7 +216,6 @@ public class UIDecalLayer : MonoBehaviour, IDecalLayer, IDragTarget, IPointerDow
         if (_layerRect == null || _parentRect == null) return;
         _wasDragging = true;
 
-        // ������ delta �� ���� � �������� ������ ��������� ���������� �� ����� �����
         var canvas = GetComponentInParent<Canvas>();
         DecalLayerDragHandler.ExecuteDrag(
             eventData, _layerRect, _parentRect, canvas, _dragSensitivity, _onMoved);

@@ -85,10 +85,6 @@ public class DecalTransformService
         }
     }
 
-    /// <summary>
-    /// Возвращает центр и размер пересечения слоя с окном превью
-    /// в нормализованных координатах (0..1), где (0,0) — левый нижний угол.
-    /// </summary>
     private bool TryGetClippedRectInPreview(
         RectTransform layerRect,
         RectTransform previewRect,

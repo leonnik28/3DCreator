@@ -1,9 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Проецирует выделенный декаль с 2D-полотна на кружку пропорционально
-/// его положению и размеру на полотне. Использует шейдер MugDecalProjection.
-/// </summary>
 public class OverallDecalProjector : MonoBehaviour
 {
     private enum ProjectionKind
@@ -165,16 +161,11 @@ public class OverallDecalProjector : MonoBehaviour
             UpdateFromSelectedDecal();
     }
 
-    /// <summary>
-    /// Обновляет параметры материала по выделенному декалю.
-    /// </summary>
     public void UpdateFromSelectedDecal()
     {
         EnsureMaterial();
         if (_propBlock == null) return;
 
-        // Чистим блок, чтобы изменения ModelColorizer по _BaseColor не перетирались
-        // "хвостами" предыдущих значений.
         if (_objectRenderer != null)
             _objectRenderer.GetPropertyBlock(_propBlock, _materialIndex);
 
@@ -221,8 +212,6 @@ public class OverallDecalProjector : MonoBehaviour
         _propBlock.SetFloat(MirrorUId, decal.IsMirroredX() ? 1f : 0f);
         _propBlock.SetFloat(MirrorVId, 0f);
         _propBlock.SetFloat(CanvasFlipXId, _projectionZone != null && _projectionZone.FlipCanvasX ? 1f : 0f);
-        // BaseColor ( _BaseColor ) управляется ModelColorizer по выбранной части.
-        // Здесь не трогаем, иначе Apply цвета может перетираться.
         ApplyToRenderer();
     }
 
@@ -243,7 +232,6 @@ public class OverallDecalProjector : MonoBehaviour
 
         ApplyRectGeometry();
 
-        // Отключаем "ручку" и цилиндрические ограничения в прямоугольных шейдерах.
         bool useNoPrintOnRect = _projectionKind == ProjectionKind.PillowRect || _projectionKind == ProjectionKind.TShirtRect;
         _propBlock.SetFloat(NoPrintCenterUId, useNoPrintOnRect ? _noPrintCenterU : 0f);
         _propBlock.SetFloat(NoPrintHalfUId, useNoPrintOnRect ? _noPrintHalfU : 0f);
@@ -259,7 +247,6 @@ public class OverallDecalProjector : MonoBehaviour
         if (_propBlock == null) return;
 
         _propBlock.SetVector(DecalRectId, new Vector4(0.5f, 0.5f, 0f, 0f));
-        // BaseColor управляется ModelColorizer по выбранной части.
     }
 
     private void ApplyCylinderGeometry()
@@ -270,8 +257,6 @@ public class OverallDecalProjector : MonoBehaviour
         if (mf != null && mf.sharedMesh != null)
         {
             var b = mf.sharedMesh.bounds;
-            // Определяем ось высоты как самую большую по extents.
-            // 0=X, 1=Y, 2=Z
             int axis = 1;
             float ex = Mathf.Abs(b.extents.x);
             float ey = Mathf.Abs(b.extents.y);
@@ -589,9 +574,6 @@ public class OverallDecalProjector : MonoBehaviour
 
     private static void PickShopperAxes(int axisN, out int axisU, out int axisV)
     {
-        // Для шоппера печатная область ориентирована как "ширина x высота".
-        // Если нормаль плоскости смотрит по X, то ширина должна идти по Z, а высота по Y.
-        // Это убирает разворот на 90 градусов и корректно покрывает всю лицевую сторону.
         if (axisN == 0)
         {
             axisU = 2;
@@ -612,8 +594,6 @@ public class OverallDecalProjector : MonoBehaviour
 
     private static void PickPosterAxes(int axisN, out int axisU, out int axisV)
     {
-        // Для постера важны именно "ширина x высота", а не выбор самой большой оси.
-        // Иначе у вертикального полотна U/V меняются местами и изображение сильно растягивается.
         if (axisN == 1)
         {
             axisU = 0;
@@ -710,10 +690,6 @@ public class OverallDecalProjector : MonoBehaviour
         return Mathf.Max(GetAxisExtent(axis, Mathf.Abs(extents.x), Mathf.Abs(extents.y), Mathf.Abs(extents.z)), 0.001f);
     }
 
-    /// <summary>
-    /// Вычисляет нормализованный rect декаля (0..1) в пространстве полотна превью.
-    /// center, halfSize — в 0..1, rotationDeg — угол в градусах.
-    /// </summary>
     private bool TryGetDecalRectInCanvasSpace(
         RectTransform layerRect,
         RectTransform previewRect,

@@ -3,9 +3,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-/// <summary>
-/// Единый обработчик перетаскивания слоя декали. Используется UIDecalLayer и DecalCenterDragZone.
-/// </summary>
 public static class DecalLayerDragHandler
 {
     private const float DefaultSensitivity = 2f;
